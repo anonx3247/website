@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+function getRandomColor() {
+    const hue = Math.floor(Math.random() * 360);
+    return `hsl(${hue}, 70%, 60%)`;
+}
+
+window.onload = function() {
+    const skills = document.querySelectorAll('.skill');
+    skills.forEach(skill => {
+        const color = getRandomColor();
+        skill.addEventListener('mouseenter', () => {
+            skill.style.color = color;
+        });
+        skill.addEventListener('mouseleave', () => {
+            skill.style.color = 'white';
+        });
+    });
+}
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <title>Skills</title>
+    <style>
+        
+    </style>
+</head>
+<body>
+    <h1>ANAS LECAILLON</h1>
+    <nav> 
+        <a href="index.html"><i class="fas fa-home icon"></i>Home</a>
+        <a href="projects.html"><i class="fas fa-project-diagram icon"></i>Projects</a>
+        <a href="experience.html"><i class="fas fa-briefcase icon"></i>Experience</a>
+        <a href="education.html"><i class="fas fa-graduation-cap icon"></i>Education</a>
+        <a href="skills.html"><i class="fas fa-tools icon"></i>Skills</a>
+    </nav>
+
+    <div class="skills-container">
+        <div class="skill">Machine Learning</div>
+        <div class="skill">Deep Learning</div>
+        <div class="skill">Computer Vision</div>
+        <div class="skill">Python</div>
+        <div class="skill">PyTorch</div>
+        <div class="skill">TensorFlow</div>
+        <div class="skill">Mathematics</div>
+        <div class="skill">Statistics</div>
+        <div class="skill">Flutter</div>
+        <div class="skill">Dart</div>
+        <div class="skill">Leadership</div>
+        <div class="skill">Project Management</div>
+        <div class="skill">Strategic Planning</div>
+        <div class="skill">Business Development</div>
+        <div class="skill">Entrepreneurship</div>
+        <div class="skill">C</div>
+        <div class="skill">Go</div>
+        <div class="skill">Java</div>
+        <div class="skill">HPC</div>
+        <div class="skill">Git</div>
+        <div class="skill">Linux Sysadmin</div>
+        <div class="skill">GDB</div>
+        <div class="skill">Docker</div>
+        <div class="skill">English</div>
+        <div class="skill">French</div>
+        <div class="skill">Spanish</div>
+        <div class="skill">Arabic</div>
+    </div>
+</body>
+</html>
