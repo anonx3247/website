@@ -10,7 +10,7 @@ fi
 
 # Install oh-my-zsh
 echo "Installing oh-my-zsh"
-curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh
+[[ ! -d ~/.config/oh-my-zsh ]] && curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | zsh
 
 ZSH="$HOME/.config/oh-my-zsh"
 ZSH_CUSTOM="$HOME/.config/oh-my-zsh/custom"
