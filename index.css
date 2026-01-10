@@ -5,9 +5,9 @@
 
 body {
     font-family: "Crimson Text", serif;
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px 40px;
     text-align: center;
     background-color: #141414;
     color: white;
@@ -209,41 +209,91 @@ ul {
 
 .project-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
 }
 
 .project-card {
     background-color: #222;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     transition: transform 0.2s ease;
-    
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    align-items: stretch;
+    min-height: 200px;
+
     &:hover {
-        transform: scale(1.02);
+        transform: scale(1.01);
     }
 }
 
-
-.project-header {
+.project-image-container {
+    flex-shrink: 0;
+    width: 180px;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 15px;
+    align-items: center;
+    justify-content: center;
 }
 
 .project-image {
-    width: 150px;
-    height: 100px;
+    max-width: 170px;
+    max-height: 170px;
     object-fit: contain;
-    border-radius: 5px;
-    margin-left: 15px;
+    border-radius: 6px;
+}
+
+.project-content {
+    flex: 1;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.project-header h3 {
+    margin: 0;
 }
 
 .project-list {
     font-family: 'Montserrat', sans-serif;
-    padding-left: 30px;
-    text-align: left;
+    padding-left: 20px;
+    margin: 10px 0;
+}
+
+.project-footer {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.project-footer .skills {
+    margin: 0;
+}
+
+@media (max-width: 1000px) {
+    .project-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 500px) {
+    .project-card {
+        flex-direction: column;
+    }
+
+    .project-image-container {
+        width: 100%;
+        height: 140px;
+    }
 }
 
 .wip-tag {
