@@ -271,6 +271,65 @@ nav a:hover {
 .skill:hover {
     border-color: rgba(255, 255, 255, 0.25);
     color: #fff;
+    cursor: pointer;
+}
+
+/* Skill Tooltip */
+.skill-tooltip {
+    position: fixed;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    padding: 16px 20px;
+    min-width: 200px;
+    max-width: 300px;
+    transform: translateX(-50%);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.skill-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tooltip-section {
+    margin-bottom: 12px;
+}
+
+.tooltip-section:last-child {
+    margin-bottom: 0;
+}
+
+.tooltip-label {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.tooltip-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tooltip-link {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 0.85em;
+    color: #b0b0b0;
+    text-decoration: none;
+    padding: 4px 0;
+    transition: color 0.2s ease;
+}
+
+.tooltip-link:hover {
+    color: #fff;
 }
 
 /* Projects */

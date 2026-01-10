@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="index.css">
     <title>Skills - Anas Lecaillon</title>
 </head>
 <body>
     <h1>ANAS LECAILLON</h1>
-    <nav> 
+    <nav>
         <a href="index.html"><i class="fas fa-home icon"></i>Home</a>
         <a href="projects.html"><i class="fas fa-project-diagram icon"></i>Projects</a>
         <a href="experience.html"><i class="fas fa-briefcase icon"></i>Experience</a>
@@ -50,5 +50,200 @@
         <div class="skill">Spanish</div>
         <div class="skill">Arabic</div>
     </div>
+
+    <div class="skill-tooltip" id="skillTooltip"></div>
+
+<script>
+const skillData = {
+    'Machine Learning': {
+        projects: [
+            { name: 'Higgs Boson Detection', url: 'projects.html' },
+            { name: 'NN Library in Vlang', url: 'https://github.com/anonx3247/vai' }
+        ],
+        experience: [
+            { name: 'GaussNotes - AI Copilot', url: 'experience.html' }
+        ]
+    },
+    'Deep Learning': {
+        projects: [
+            { name: 'GaussNotes', url: 'https://gaussnotes.com' },
+            { name: 'GPT-2 From Scratch', url: 'https://github.com/Automatants/transformer' },
+            { name: 'TRM-LLM', url: 'https://github.com/anonx3247/llm-trm' }
+        ],
+        experience: [
+            { name: 'Automatants - AI Education', url: 'experience.html' }
+        ]
+    },
+    'Computer Vision': {
+        projects: [
+            { name: 'VLM Web Agent Dataset', url: 'https://github.com/anonx3247/vlm-webagents' },
+            { name: 'Autonomous Vehicle', url: 'https://github.com/anonx3247/autonomous-vehicle' }
+        ],
+        experience: [
+            { name: 'Automatants - AI Education', url: 'experience.html' }
+        ]
+    },
+    'Python': {
+        projects: [
+            { name: 'TRM-LLM', url: 'https://github.com/anonx3247/llm-trm' },
+            { name: 'VLM Web Agent Dataset', url: 'https://github.com/anonx3247/vlm-webagents' },
+            { name: 'Autonomous Vehicle', url: 'https://github.com/anonx3247/autonomous-vehicle' },
+            { name: 'Higgs Boson Detection', url: 'projects.html' }
+        ]
+    },
+    'PyTorch': {
+        projects: [
+            { name: 'GaussNotes', url: 'https://gaussnotes.com' },
+            { name: 'TRM-LLM', url: 'https://github.com/anonx3247/llm-trm' },
+            { name: 'GPT-2 From Scratch', url: 'https://github.com/Automatants/transformer' }
+        ]
+    },
+    'Mathematics': {
+        projects: [
+            { name: 'GaussNotes', url: 'https://gaussnotes.com' }
+        ],
+        education: [
+            { name: 'BSc Mathematics & Physics', url: 'education.html' }
+        ]
+    },
+    'Statistics': {
+        education: [
+            { name: 'BSc Mathematics & Physics', url: 'education.html' },
+            { name: 'MSc Data Science', url: 'education.html' }
+        ]
+    },
+    'Flutter': {
+        projects: [
+            { name: 'GaussNotes', url: 'https://gaussnotes.com' }
+        ],
+        experience: [
+            { name: 'GaussNotes - Founder', url: 'experience.html' }
+        ]
+    },
+    'Dart': {
+        projects: [
+            { name: 'GaussNotes', url: 'https://gaussnotes.com' }
+        ],
+        experience: [
+            { name: 'GaussNotes - Founder', url: 'experience.html' }
+        ]
+    },
+    'Leadership': {
+        experience: [
+            { name: 'GaussNotes - Founder', url: 'experience.html' },
+            { name: 'Automatants - VP', url: 'experience.html' }
+        ]
+    },
+    'Project Management': {
+        experience: [
+            { name: 'GaussNotes - Founder', url: 'experience.html' }
+        ],
+        education: [
+            { name: 'MSc Data Science', url: 'education.html' }
+        ]
+    },
+    'Business Development': {
+        experience: [
+            { name: 'GaussNotes - Founder', url: 'experience.html' }
+        ]
+    },
+    'Entrepreneurship': {
+        experience: [
+            { name: 'GaussNotes - Founder', url: 'experience.html' }
+        ],
+        education: [
+            { name: 'MSc Data Science', url: 'education.html' }
+        ]
+    },
+    'Go': {
+        projects: [
+            { name: 'Delivery Optimization', url: 'https://github.com/anonx3247/tipe' }
+        ],
+        experience: [
+            { name: 'GaussNotes - Backend', url: 'experience.html' }
+        ]
+    },
+    'HPC': {
+        projects: [
+            { name: 'GPT-2 From Scratch', url: 'https://github.com/Automatants/transformer' }
+        ],
+        education: [
+            { name: 'MSc Data Science', url: 'education.html' }
+        ]
+    },
+    'Typescript': {
+        projects: [
+            { name: 'srchd', url: 'https://github.com/dust-tt/srchd' }
+        ],
+        experience: [
+            { name: 'Dust - Software Engineer', url: 'experience.html' }
+        ]
+    }
+};
+
+const tooltip = document.getElementById('skillTooltip');
+const skills = document.querySelectorAll('.skill');
+
+skills.forEach(skill => {
+    skill.addEventListener('mouseenter', (e) => {
+        const skillName = skill.textContent;
+        const data = skillData[skillName];
+
+        if (data) {
+            let content = '';
+
+            if (data.projects && data.projects.length > 0) {
+                const projectLinks = data.projects.map(p =>
+                    `<a href="${p.url}" class="tooltip-link">${p.name}</a>`
+                ).join('');
+                content += `<div class="tooltip-section">
+                    <div class="tooltip-label">Projects</div>
+                    <div class="tooltip-items">${projectLinks}</div>
+                </div>`;
+            }
+
+            if (data.experience && data.experience.length > 0) {
+                const expLinks = data.experience.map(p =>
+                    `<a href="${p.url}" class="tooltip-link">${p.name}</a>`
+                ).join('');
+                content += `<div class="tooltip-section">
+                    <div class="tooltip-label">Experience</div>
+                    <div class="tooltip-items">${expLinks}</div>
+                </div>`;
+            }
+
+            if (data.education && data.education.length > 0) {
+                const eduLinks = data.education.map(p =>
+                    `<a href="${p.url}" class="tooltip-link">${p.name}</a>`
+                ).join('');
+                content += `<div class="tooltip-section">
+                    <div class="tooltip-label">Education</div>
+                    <div class="tooltip-items">${eduLinks}</div>
+                </div>`;
+            }
+
+            if (content) {
+                tooltip.innerHTML = content;
+                const rect = skill.getBoundingClientRect();
+                tooltip.style.left = rect.left + (rect.width / 2) + 'px';
+                tooltip.style.top = (rect.bottom + 10) + 'px';
+                tooltip.classList.add('visible');
+            }
+        }
+    });
+
+    skill.addEventListener('mouseleave', () => {
+        tooltip.classList.remove('visible');
+    });
+});
+
+tooltip.addEventListener('mouseenter', () => {
+    tooltip.classList.add('visible');
+});
+
+tooltip.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('visible');
+});
+</script>
 </body>
 </html>
