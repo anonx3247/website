@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400..900&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Website</title>
+    <title>Anas Lecaillon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="index.css">
 </head>
@@ -22,33 +22,21 @@
 
     <img src="anas.jpeg" alt="Profile Picture" class="profile-img">
     <p>Engineering, Entrepreneurship, AI Research</p>
-    <div class="links-container" style="flex-direction: row; justify-content: center;">
-        <a href="https://github.com/anonx3247" class="link">
-            <i class="fab fa-github icon"></i>
+
+    <div class="social-links">
+        <a href="https://github.com/anonx3247" class="link" aria-label="GitHub">
+            <i class="fab fa-github"></i>
         </a>
-        <a href="https://linkedin.com/in/anas-lecaillon" class="link">
-            <i class="fab fa-linkedin icon"></i>
+        <a href="https://linkedin.com/in/anas-lecaillon" class="link" aria-label="LinkedIn">
+            <i class="fab fa-linkedin"></i>
         </a>
-        <a href="https://twitter.com/anonx3247" class="link">
-            <i class="fab fa-twitter icon"></i>
+        <a href="https://twitter.com/anonx3247" class="link" aria-label="Twitter">
+            <i class="fab fa-twitter"></i>
         </a>
     </div>
 
-<div style="display: flex; justify-content: center; margin: 20px 0;">
-    <img src="https://ghchart.rshah.org/000000/anonx3247" alt="Github Contribution Graph" class="github-chart">
-</div>
-
-<style>
-    .github-chart {
-        width: 100%;
-        max-width: 800px;
-        background-color: rgba(255,255,255,0.1);
-        padding: 10px;
-        border-radius: 5px;
-        color: black;
-    }
-</style>
-    
-    
+    <div class="github-chart-container">
+        <img src="https://ghchart.rshah.org/000000/anonx3247" alt="GitHub Contribution Graph" class="github-chart">
+    </div>
 </body>
 </html>

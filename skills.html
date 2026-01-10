@@ -1,33 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
-<script>
-function getRandomColor() {
-    const hue = Math.floor(Math.random() * 360);
-    return `hsl(${hue}, 70%, 60%)`;
-}
-
-window.onload = function() {
-    const skills = document.querySelectorAll('.skill');
-    skills.forEach(skill => {
-        const color = getRandomColor();
-        skill.addEventListener('mouseenter', () => {
-            skill.style.color = color;
-        });
-        skill.addEventListener('mouseleave', () => {
-            skill.style.color = 'white';
-        });
-    });
-}
-</script>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="index.css">
-    <title>Skills</title>
-    <style>
-        
-    </style>
+    <title>Skills - Anas Lecaillon</title>
 </head>
 <body>
     <h1>ANAS LECAILLON</h1>
