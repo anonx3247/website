@@ -1,0 +1,126 @@
+{
+    "Machine Learning": {
+        "projects": [
+            { "name": "Higgs Boson Detection", "url": "projects.html" },
+            { "name": "NN Library in Vlang", "url": "https://github.com/anonx3247/vai" }
+        ],
+        "experience": [
+            { "name": "GaussNotes - AI Copilot", "url": "experience.html" }
+        ]
+    },
+    "Deep Learning": {
+        "projects": [
+            { "name": "GaussNotes", "url": "https://gaussnotes.com" },
+            { "name": "GPT-2 From Scratch", "url": "https://github.com/Automatants/transformer" },
+            { "name": "TRM-LLM", "url": "https://github.com/anonx3247/llm-trm" }
+        ],
+        "experience": [
+            { "name": "Automatants - AI Education", "url": "experience.html" }
+        ]
+    },
+    "Computer Vision": {
+        "projects": [
+            { "name": "VLM Web Agent Dataset", "url": "https://github.com/anonx3247/vlm-webagents" },
+            { "name": "Autonomous Vehicle", "url": "https://github.com/anonx3247/autonomous-vehicle" }
+        ],
+        "experience": [
+            { "name": "Automatants - AI Education", "url": "experience.html" }
+        ]
+    },
+    "Python": {
+        "projects": [
+            { "name": "TRM-LLM", "url": "https://github.com/anonx3247/llm-trm" },
+            { "name": "VLM Web Agent Dataset", "url": "https://github.com/anonx3247/vlm-webagents" },
+            { "name": "Autonomous Vehicle", "url": "https://github.com/anonx3247/autonomous-vehicle" },
+            { "name": "Higgs Boson Detection", "url": "projects.html" }
+        ]
+    },
+    "PyTorch": {
+        "projects": [
+            { "name": "GaussNotes", "url": "https://gaussnotes.com" },
+            { "name": "TRM-LLM", "url": "https://github.com/anonx3247/llm-trm" },
+            { "name": "GPT-2 From Scratch", "url": "https://github.com/Automatants/transformer" }
+        ]
+    },
+    "Mathematics": {
+        "projects": [
+            { "name": "GaussNotes", "url": "https://gaussnotes.com" }
+        ],
+        "education": [
+            { "name": "BSc Mathematics & Physics", "url": "education.html" }
+        ]
+    },
+    "Statistics": {
+        "education": [
+            { "name": "BSc Mathematics & Physics", "url": "education.html" },
+            { "name": "MSc Data Science", "url": "education.html" }
+        ]
+    },
+    "Flutter": {
+        "projects": [
+            { "name": "GaussNotes", "url": "https://gaussnotes.com" }
+        ],
+        "experience": [
+            { "name": "GaussNotes - Founder", "url": "experience.html" }
+        ]
+    },
+    "Dart": {
+        "projects": [
+            { "name": "GaussNotes", "url": "https://gaussnotes.com" }
+        ],
+        "experience": [
+            { "name": "GaussNotes - Founder", "url": "experience.html" }
+        ]
+    },
+    "Leadership": {
+        "experience": [
+            { "name": "GaussNotes - Founder", "url": "experience.html" },
+            { "name": "Automatants - VP", "url": "experience.html" }
+        ]
+    },
+    "Project Management": {
+        "experience": [
+            { "name": "GaussNotes - Founder", "url": "experience.html" }
+        ],
+        "education": [
+            { "name": "MSc Data Science", "url": "education.html" }
+        ]
+    },
+    "Business Development": {
+        "experience": [
+            { "name": "GaussNotes - Founder", "url": "experience.html" }
+        ]
+    },
+    "Entrepreneurship": {
+        "experience": [
+            { "name": "GaussNotes - Founder", "url": "experience.html" }
+        ],
+        "education": [
+            { "name": "MSc Data Science", "url": "education.html" }
+        ]
+    },
+    "Go": {
+        "projects": [
+            { "name": "Delivery Optimization", "url": "https://github.com/anonx3247/tipe" }
+        ],
+        "experience": [
+            { "name": "GaussNotes - Backend", "url": "experience.html" }
+        ]
+    },
+    "HPC": {
+        "projects": [
+            { "name": "GPT-2 From Scratch", "url": "https://github.com/Automatants/transformer" }
+        ],
+        "education": [
+            { "name": "MSc Data Science", "url": "education.html" }
+        ]
+    },
+    "Typescript": {
+        "projects": [
+            { "name": "srchd", "url": "https://github.com/dust-tt/srchd" }
+        ],
+        "experience": [
+            { "name": "Dust - Software Engineer", "url": "experience.html" }
+        ]
+    }
+}
