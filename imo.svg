@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#1a1a1f"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </radialGradient>
+    <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0e6d2"/>
+      <stop offset="100%" stop-color="#c9a76a"/>
+    </linearGradient>
+  </defs>
+  <rect width="300" height="300" fill="url(#bg)"/>
+  <g fill="url(#ink)" font-family="Georgia, 'Times New Roman', serif" font-style="italic" text-anchor="middle">
+    <text x="150" y="86" font-size="34">IMO 2024 · P6</text>
+    <text x="150" y="150" font-size="46">∑ aₙ ≤ ∫ f(x) dx</text>
+    <text x="150" y="210" font-size="38">∀ n ∈ ℕ,  ∃ k</text>
+    <text x="150" y="260" font-size="30" opacity="0.7">prove   ⇒   QED</text>
+  </g>
+</svg>

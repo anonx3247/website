@@ -6,7 +6,7 @@
     <title>Projects - Anas Lecaillon</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="index.css">
 </head>
@@ -20,28 +20,10 @@
         <a href="skills.html"><i class="fas fa-tools icon"></i>Skills</a>
         <a href="https://msrchd.lecaillon.com"><i class="fas fa-flask icon"></i>Experiments</a>
     </nav>
-    <div class="project-grid">
-        <div class="project-card">
-            <div class="project-image-container">
-                <img src="gaussnotes.png" alt="GaussNotes Screenshot" class="project-image">
-            </div>
-            <div class="project-content">
-                <div class="project-header">
-                    <h3>GaussNotes</h3>
-                </div>
-                <ul class="project-list">
-                    <li>Built an AI-powered LaTeX editor for mathematics</li>
-                    <li>Developed an AI-Copilot for Math Editing</li>
-                    <li>Created Flutter web app with real-time editing</li>
-                </ul>
-                <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> PyTorch • Flutter • Transformers • Mathematics</p>
-                    <a href="https://gaussnotes.com" class="github-link"><i class="fas fa-external-link-alt"></i> Website</a>
-                    <a href="https://www.youtube.com/watch?v=uuSHqmF1FF4" class="github-link"><i class="fab fa-youtube"></i> Demo</a>
-                </div>
-            </div>
-        </div>
 
+    <p class="page-intro">A selection of work spanning multi-agent systems, reasoning research, language design, and applied ML.</p>
+
+    <div class="project-grid">
         <div class="project-card">
             <div class="project-image-container">
                 <img src="srchd.png" alt="srchd Project Screenshot" class="project-image">
@@ -56,10 +38,51 @@
                     <li>Working on reasoning and search intensive problems with 100s of agents</li>
                 </ul>
                 <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> TypeScript • Multi-Agent Systems • Reasoning • LLMs</p>
+                    <p class="skills"><i class="fas fa-tools"></i> TypeScript &middot; Multi-Agent Systems &middot; Reasoning &middot; LLMs</p>
                     <a href="https://github.com/dust-tt/srchd" class="github-link"><i class="fab fa-github"></i> GitHub</a>
                     <a href="https://www.youtube.com/watch?v=9OjcAYsncpw" class="github-link"><i class="fab fa-youtube"></i> Explanation</a>
-                    <a href="https://srchd.lecaillon.com"><i class="fas fa-flask"></i> Experiments</a>
+                    <a href="https://srchd.lecaillon.com" class="github-link"><i class="fas fa-flask"></i> Experiments</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="project-card">
+            <div class="project-image-container">
+                <img src="imo.svg" alt="IMO Experiment" class="project-image">
+            </div>
+            <div class="project-content">
+                <div class="project-header">
+                    <h3>IMO + Multi-Agent Reasoning<span class="wip-tag">WIP</span></h3>
+                </div>
+                <ul class="project-list">
+                    <li>Running srchd against International Mathematical Olympiad problems</li>
+                    <li>Studying how dozens of collaborating agents tackle proof-style reasoning</li>
+                    <li>Tracking partial-credit progress and failure modes across problem families</li>
+                </ul>
+                <div class="project-footer">
+                    <p class="skills"><i class="fas fa-tools"></i> Multi-Agent Systems &middot; Reasoning &middot; LLMs &middot; Mathematics</p>
+                    <a href="https://msrchd.lecaillon.com" class="github-link"><i class="fas fa-flask"></i> Experiment Viewer</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="project-card">
+            <div class="project-image-container">
+                <img src="gaussnotes.png" alt="GaussNotes Screenshot" class="project-image">
+            </div>
+            <div class="project-content">
+                <div class="project-header">
+                    <h3>GaussNotes</h3>
+                </div>
+                <ul class="project-list">
+                    <li>Built an AI-powered LaTeX editor for mathematics</li>
+                    <li>Developed an AI-Copilot for Math Editing</li>
+                    <li>Created Flutter web app with real-time editing</li>
+                </ul>
+                <div class="project-footer">
+                    <p class="skills"><i class="fas fa-tools"></i> PyTorch &middot; Flutter &middot; Transformers &middot; Mathematics</p>
+                    <a href="https://gaussnotes.com" class="github-link"><i class="fas fa-external-link-alt"></i> Website</a>
+                    <a href="https://www.youtube.com/watch?v=uuSHqmF1FF4" class="github-link"><i class="fab fa-youtube"></i> Demo</a>
                 </div>
             </div>
         </div>
@@ -77,7 +100,7 @@
                     <li>Adapting SmolLMv3 with a TRM in the hidden dimension and finetuning with QLoRA for reasoning on MATH</li>
                 </ul>
                 <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> Python • PyTorch • RL • CoT</p>
+                    <p class="skills"><i class="fas fa-tools"></i> Python &middot; PyTorch &middot; RL &middot; CoT</p>
                     <a href="https://github.com/anonx3247/llm-trm" class="github-link"><i class="fab fa-github"></i> GitHub</a>
                 </div>
             </div>
@@ -97,7 +120,7 @@
                     <li>Fine-tuned PaliGemma for web navigation</li>
                 </ul>
                 <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> Python • Playwright • Computer Vision • Data Engineering</p>
+                    <p class="skills"><i class="fas fa-tools"></i> Python &middot; Playwright &middot; Computer Vision &middot; Data Engineering</p>
                     <a href="https://github.com/anonx3247/vlm-webagents" class="github-link"><i class="fab fa-github"></i> GitHub</a>
                 </div>
             </div>
@@ -117,7 +140,7 @@
                     <li>Guiding 15 students through the project</li>
                 </ul>
                 <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> PyTorch • NLP • Transformers • HPC</p>
+                    <p class="skills"><i class="fas fa-tools"></i> PyTorch &middot; NLP &middot; Transformers &middot; HPC</p>
                     <a href="https://github.com/Automatants/transformer" class="github-link"><i class="fab fa-github"></i> GitHub</a>
                 </div>
             </div>
@@ -139,67 +162,8 @@
                     <li>Planned: compiler and runtime environment using LLVM</li>
                 </ul>
                 <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> Rust • Compiler Design • Programming Languages</p>
+                    <p class="skills"><i class="fas fa-tools"></i> Rust &middot; Compiler Design &middot; Programming Languages</p>
                     <a href="https://github.com/anonx3247/loop-rs" class="github-link"><i class="fab fa-github"></i> GitHub</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="project-card">
-            <div class="project-image-container">
-                <img src="autonomous-vehicle.jpeg" alt="Autonomous Vehicle Screenshot" class="project-image">
-            </div>
-            <div class="project-content">
-                <div class="project-header">
-                    <h3>Autonomous Vehicle</h3>
-                </div>
-                <ul class="project-list">
-                    <li>Built self-driving car prototype using Raspberry Pi</li>
-                    <li>Implemented computer vision for lane detection</li>
-                    <li>Developed real-time control systems</li>
-                </ul>
-                <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> Python • OpenCV • Robotics • Arduino • Raspberry Pi</p>
-                    <a href="https://github.com/anonx3247/autonomous-vehicle" class="github-link"><i class="fab fa-github"></i> GitHub</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="project-card">
-            <div class="project-image-container">
-                <img src="higgs.jpg" alt="Higgs Project Screenshot" class="project-image">
-            </div>
-            <div class="project-content">
-                <div class="project-header">
-                    <h3>Higgs Boson Detection</h3>
-                </div>
-                <ul class="project-list">
-                    <li>Developed ML models for particle physics data analysis</li>
-                    <li>Processed CERN collision data</li>
-                    <li>Achieved high detection accuracy using ML and Deep strategies</li>
-                </ul>
-                <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> Python • Physics • Machine Learning • Big Data</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="project-card">
-            <div class="project-image-container">
-                <img src="perceptron.png" alt="Perceptron Library Screenshot" class="project-image">
-            </div>
-            <div class="project-content">
-                <div class="project-header">
-                    <h3>NN Library in Vlang</h3>
-                </div>
-                <ul class="project-list">
-                    <li>Created neural network library in V programming language</li>
-                    <li>Implemented various activation functions and optimizers</li>
-                    <li>Implemented backpropagation algorithm</li>
-                </ul>
-                <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> V • Neural Networks • Machine Learning</p>
-                    <a href="https://github.com/anonx3247/vai" class="github-link"><i class="fab fa-github"></i> GitHub</a>
                 </div>
             </div>
         </div>
@@ -219,12 +183,12 @@
                     <li>Used Held-Karp algorithm to optimize routes</li>
                 </ul>
                 <div class="project-footer">
-                    <p class="skills"><i class="fas fa-tools"></i> Go • Algorithms • Optimization • Graph Theory</p>
+                    <p class="skills"><i class="fas fa-tools"></i> Go &middot; Algorithms &middot; Optimization &middot; Graph Theory</p>
                     <a href="https://github.com/anonx3247/tipe" class="github-link"><i class="fab fa-github"></i> GitHub</a>
                 </div>
             </div>
         </div>
     </div>
 
-    </body>
+</body>
 </html>
