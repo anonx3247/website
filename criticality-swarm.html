@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criticality-Inducing Training for LLM Swarms — v1 Design Doc — Anas Lecaillon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        .doc { width: 100%; max-width: 900px; margin: 0 auto; text-align: left; }
+        .doc > h1 { font-size: 2em; letter-spacing: 0.02em; margin-bottom: 4px; }
+        .doc h1, .doc h2, .doc h3 { text-align: left; }
+        .doc h2 { margin-top: 48px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .doc h3 { margin-top: 28px; }
+        .doc p { color: var(--text-mute); line-height: 1.7; }
+        .doc strong { color: #fff; }
+        .doc hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+        .doc blockquote { border-left: 3px solid var(--accent); margin: 16px 0; padding: 4px 16px; color: var(--text-mute); background: rgba(255,255,255,0.02); }
+        .doc table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.95em; }
+        .doc th, .doc td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+        .doc th { background: rgba(255,255,255,0.06); color: #fff; font-family: 'Inter', sans-serif; letter-spacing: 0.03em; font-size: 0.9em; }
+        .doc td { color: var(--text-mute); vertical-align: top; }
+        .doc pre { background: #111216; border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; overflow-x: auto; color: #d7d7dc; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; line-height: 1.55; }
+        .doc code { font-family: 'JetBrains Mono', monospace; font-size: 0.88em; color: #e3c386; }
+        .doc :not(pre) > code { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+        .doc h1, .doc h2, .doc h3, .doc h4 { font-family: 'CustomFont', Georgia, serif; font-weight: 400; color: #fff; }
+        .doc a { color: var(--accent); }
+        .doc a:hover { color: #fff; }
+        .doc .math { color: #e8e8ec; }
+        .doc .math.inline { }
+        .doc .math.display { text-align: center; margin: 20px 0; }
+        .doc ul, .doc ol { font-family: 'Inter', sans-serif; font-size: 0.95em; color: var(--text-mute); }
+        .doc li { margin-bottom: 4px; }
+        .back-link { display: block; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <h1>ANAS LECAILLON</h1>
+    <nav>
+        <a href="index.html"><i class="fas fa-home icon"></i>Home</a>
+        <a href="projects.html"><i class="fas fa-project-diagram icon"></i>Projects</a>
+        <a href="experience.html"><i class="fas fa-briefcase icon"></i>Experience</a>
+        <a href="education.html"><i class="fas fa-graduation-cap icon"></i>Education</a>
+        <a href="skills.html"><i class="fas fa-tools icon"></i>Skills</a>
+        <a href="https://msrchd.lecaillon.com"><i class="fas fa-flask icon"></i>Experiments</a>
+    </nav>
+
+    <div class="doc">
+<h1
+id="criticality-inducing-training-for-llm-swarms-v1-design-document">Criticality-Inducing
+Training for LLM Swarms — v1 Design Document</h1>
+<p><strong>Author</strong>: Anas (research notes, draft)
+<strong>Status</strong>: v1 design, pre-implementation
+<strong>Infra</strong>: Tinker (Thinking Machines Lab)
+<strong>Scope</strong>: Toy task (multi-fragment NIAH), GRPO + LoRA,
+swarm of 64 agents</p>
+<hr />
+<h2 id="motivation">1. Motivation</h2>
+<p>Hierarchical multi-agent LLM systems (orchestrator + subagents,
+e.g. Kimi K2.5’s PARL) achieve good task performance but inherit the
+brittleness of their hierarchy: the orchestrator is a single point of
+failure, scaling is bottlenecked, and the system has hand-engineered
+communication topology. A leaderless alternative — Boids-style swarm
+coordination with emergent communication patterns — is genuinely
+under-explored for LLMs.</p>
+<p>For a leaderless swarm to be computationally useful, it must operate
+near a <strong>critical regime</strong>: the phase boundary between
+local independence (no coordination) and global lockstep (mode
+collapse). At criticality, information propagates across the swarm at
+all scales, susceptibility to relevant inputs is maximized, and dynamic
+range is largest. Off-critical, either coordination dies out or the
+swarm collapses to consensus on noise.</p>
+<p>This document specifies v1 of an experimental program to test whether
+<strong>criticality-inducing objectives</strong> can be added to RL
+training of an LLM swarm such that emergent dynamics become critical,
+measured by power-law avalanche statistics with consistent finite-size
+scaling exponents, and whether such criticality is computationally
+productive on a controlled task (multi-fragment
+needle-in-a-haystack).</p>
+<hr />
+<h2 id="task-multi-fragment-niah">2. Task: Multi-Fragment NIAH</h2>
+<h3 id="definition">2.1 Definition</h3>
+<p>A <strong>rollout</strong> consists of: - A <strong>corpus</strong>
+<span class="math inline">\(C\)</span>: long irrelevant text (Paul
+Graham essays for v0, RULER/BABILong-derived for v1) of total length
+<span class="math inline">\(L_C\)</span> tokens, partitioned into <span
+class="math inline">\(N\)</span> shards <span
+class="math inline">\(\{C_1, \dots, C_N\}\)</span> of roughly equal
+length. - A <strong>question</strong> <span
+class="math inline">\(q\)</span> whose answer is a structured object
+<span class="math inline">\(a^* = (s_1^*, \dots, s_K^*)\)</span> with
+<span class="math inline">\(K\)</span> slots (e.g. <span
+class="math inline">\(K=3\)</span>: name, function, event). - <span
+class="math inline">\(K\)</span> planted <strong>fragments</strong>
+<span class="math inline">\(f_1, \dots, f_K\)</span>, each a short text
+passage that uniquely encodes one slot value, inserted at controlled
+positions across shards. Fragments are placed such that <strong>no shard
+contains all <span class="math inline">\(K\)</span> fragments</strong> —
+by construction, every solution requires at least 2 agents’
+contributions. - <strong>Decoy fragments</strong>: passages that fill
+some slots correctly but conflict on others (correct function and event,
+wrong name). These force cross-checking rather than first-match
+commitment.</p>
+<h3 id="difficulty-axes">2.2 Difficulty axes</h3>
+<table>
+<thead>
+<tr>
+<th>Axis</th>
+<th>Symbol</th>
+<th>v1 default</th>
+<th>Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Number of agents</td>
+<td><span class="math inline">\(N\)</span></td>
+<td>64</td>
+<td><span class="math inline">\(\{32, 64, 128, 256\}\)</span></td>
+</tr>
+<tr>
+<td>Number of slots</td>
+<td><span class="math inline">\(K\)</span></td>
+<td>3</td>
+<td><span class="math inline">\(\{2, 3\}\)</span></td>
+</tr>
+<tr>
+<td>Corpus length</td>
+<td><span class="math inline">\(L_C\)</span></td>
+<td>5M tokens</td>
+<td><span class="math inline">\(\{1M, 5M, 20M\}\)</span></td>
+</tr>
+<tr>
+<td>Per-agent shard</td>
+<td><span class="math inline">\(L_C/N\)</span></td>
+<td>~78K @ default</td>
+<td>(sized to fit context)</td>
+</tr>
+<tr>
+<td>Decoys per slot</td>
+<td><span class="math inline">\(D\)</span></td>
+<td>2</td>
+<td><span class="math inline">\(\{0, 1, 2, 4\}\)</span></td>
+</tr>
+<tr>
+<td>Search budget</td>
+<td><span class="math inline">\(B\)</span></td>
+<td><span class="math inline">\(0.3 \cdot L_C\)</span></td>
+<td>tighter <span class="math inline">\(\Rightarrow\)</span> harder</td>
+</tr>
+</tbody>
+</table>
+<p>Corpus is much larger than any single agent’s context window. The
+search budget <span class="math inline">\(B\)</span> is the total number
+of corpus tokens the swarm may collectively read. With <span
+class="math inline">\(B &lt; L_C\)</span>, brute-force coverage is
+impossible; coordination becomes about <em>efficient</em> allocation
+rather than mere completeness.</p>
+<p>The task is structured so that <strong>success is achievable but
+efficiency is the discriminator</strong>. The gradient signal lives in
+coordination quality, not in task feasibility.</p>
+<h3 id="scoring">2.3 Scoring</h3>
+<p>For a reported answer <span class="math inline">\(\hat{a} =
+(\hat{s}_1, \dots, \hat{s}_K)\)</span>:</p>
+<p><span class="math display">\[R_{\text{task}}(\hat{a}, a^*) = \beta
+\cdot \mathbb{1}\!\left[\bigwedge_{k=1}^K \text{match}_k(\hat{s}_k,
+s^*_k)\right] + \sum_{k=1}^K \alpha_k \cdot
+\mathbb{1}\!\left[\text{match}_k(\hat{s}_k, s^*_k)\right] - \gamma \cdot
+\frac{B_{\text{used}}}{B}\]</span></p>
+<ul>
+<li><span class="math inline">\(\text{match}_k\)</span>: canonical
+equality for structured slots (names, functions, dates), calibrated
+cosine-similarity threshold for free-text slots (events).</li>
+<li><span class="math inline">\(\beta\)</span>: completion bonus
+(discontinuity at full resolution).</li>
+<li><span class="math inline">\(\alpha_k\)</span>: per-slot partial
+credit.</li>
+<li><span class="math inline">\(\gamma\)</span>: budget-utilization
+penalty (rewards efficiency).</li>
+</ul>
+<hr />
+<h2 id="mathematical-formalism">3. Mathematical Formalism</h2>
+<h3 id="swarm-and-policy">3.1 Swarm and policy</h3>
+<p>A swarm of <span class="math inline">\(N\)</span> agents shares a
+single LoRA-adapted policy <span
+class="math inline">\(\pi_\theta\)</span>. Base model: small open-source
+LLM (Qwen-2.5 7B target, Qwen-2.5 3B for fast iteration). LoRA: rank 16,
+<span class="math inline">\(\alpha=32\)</span>, applied to attention
+projections and MLP up/down. Base frozen.</p>
+<p>Agent <span class="math inline">\(i\)</span> at step <span
+class="math inline">\(t\)</span> has local state <span
+class="math inline">\(x_i^t = (c_i, m_i^t, h_i^t)\)</span>: - <span
+class="math inline">\(c_i\)</span>: corpus shard (static within rollout)
+- <span class="math inline">\(m_i^t\)</span>: messages received from
+communication-graph neighbors up to <span
+class="math inline">\(t\)</span> - <span
+class="math inline">\(h_i^t\)</span>: agent’s CoT/scratchpad accumulated
+so far</p>
+<h3 id="communication-topology-v1-random-k-regular-graph">3.2
+Communication topology (v1: random k-regular graph)</h3>
+<p>For each rollout, sample a random <span
+class="math inline">\(k\)</span>-regular graph <span
+class="math inline">\(\mathcal{G}\)</span> on <span
+class="math inline">\(N\)</span> vertices (<span
+class="math inline">\(k=4\)</span> default). An agent’s broadcasts are
+visible only to its <span class="math inline">\(k\)</span>
+graph-neighbors. Graph fixed within rollout, resampled across
+rollouts.</p>
+<p><strong>v1 simplification</strong>: static random topology. v2 will
+replace with dynamic semantic locality (sentence-transformer embeddings
+of CoTs determine neighborhoods). v1 establishes whether criticality
+dynamics work under simple structural assumptions.</p>
+<h3 id="action-space">3.3 Action space</h3>
+<p>Agents are LLMs producing CoT and tool calls. We do not introduce a
+separate discrete action space; tool calls <em>are</em> the actions:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Tool call</th>
+<th>Action</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;read span="..."&gt;</code></td>
+<td>READ</td>
+<td>consumes <span class="math inline">\(|\text{span}|\)</span> from
+budget; reveals span</td>
+</tr>
+<tr>
+<td><code>&lt;broadcast msg="..."&gt;</code></td>
+<td>BROADCAST</td>
+<td>emits message to graph-neighbors, gated by <span
+class="math inline">\(g_i^t\)</span></td>
+</tr>
+<tr>
+<td><code>&lt;report answer="..."&gt;</code></td>
+<td>REPORT</td>
+<td>submits final answer; ends rollout</td>
+</tr>
+<tr>
+<td>(any other text — CoT)</td>
+<td>NOOP</td>
+<td>no environmental effect</td>
+</tr>
+</tbody>
+</table>
+<p>The broadcast gate <span class="math inline">\(g_i^t \in
+[0,1]\)</span> is produced alongside the tool call — the policy emits
+both message and confidence/gate score. Broadcast realized iff <span
+class="math inline">\(g_i^t &gt; \tau\)</span> (<span
+class="math inline">\(\tau=0.5\)</span> fixed in v1). This is the SOC
+threshold mechanism.</p>
+<h3 id="block-level-credit-assignment">3.4 Block-level credit
+assignment</h3>
+<p>A trajectory is segmented into <strong>blocks</strong> by tool-call
+boundaries:</p>
+<pre><code>[CoT_1] &lt;read&gt;  [CoT_2] &lt;broadcast&gt;  [CoT_3] &lt;report&gt;
+ NOOP    READ    NOOP     BROADCAST   NOOP    REPORT</code></pre>
+<p>Advantages are computed at block granularity. Within a block, all
+tokens share the block’s advantage. Block contribution to loss is
+normalized by length so a 200-token CoT doesn’t dominate a 5-token tool
+call:</p>
+<p><span class="math display">\[\mathcal{L}^{\text{block}} =
+\frac{1}{|\text{block}|} \sum_{t \in \text{block}} \rho_t
+\hat{A}_{\text{block}}\]</span></p>
+<p>This keeps GRPO standard while matching credit structure to the
+task’s natural granularity.</p>
+<h3 id="causal-broadcast-dag">3.5 Causal-broadcast DAG</h3>
+<p>A broadcast <span class="math inline">\(B_i\)</span> at time <span
+class="math inline">\(t_i\)</span> <strong>causally influences</strong>
+broadcast <span class="math inline">\(B_j\)</span> at <span
+class="math inline">\(t_j &gt; t_i\)</span> if:</p>
+<ol type="a">
+<li><span class="math inline">\(B_i\)</span> was received by agent <span
+class="math inline">\(j\)</span> before <span
+class="math inline">\(t_j\)</span>, AND</li>
+<li>the counterfactual gate logit of agent <span
+class="math inline">\(j\)</span> — recomputed without <span
+class="math inline">\(B_i\)</span> in <span
+class="math inline">\(j\)</span>’s message buffer — falls below <span
+class="math inline">\(\tau\)</span>, while the actual gate logit is
+above <span class="math inline">\(\tau\)</span>.</li>
+</ol>
+<p>The receipt of <span class="math inline">\(B_i\)</span> tipped <span
+class="math inline">\(j\)</span> into broadcasting. We build a causal
+DAG over all broadcasts in a rollout using these edges.</p>
+<p><strong>Computational cost</strong>: counterfactual gate logits
+require an extra forward pass per (broadcast, prior-broadcast-in-buffer)
+pair. In v1 we subsample to 25% of pairs during training; full
+computation at evaluation only.</p>
+<h3 id="productive-cascades-and-slot-fill-leaves">3.6 Productive
+cascades and slot-fill leaves</h3>
+<p>A <code>&lt;report&gt;</code> action that contains a correctly
+matched slot value is a <strong>slot-fill event</strong> <span
+class="math inline">\(e\)</span>.</p>
+<p><strong>Leaf identification (v1, cheap)</strong>: Broadcast <span
+class="math inline">\(B\)</span> is a leaf for slot-fill event <span
+class="math inline">\(e\)</span> if (a) <span
+class="math inline">\(B\)</span> was received by the reporting agent
+before the report, (b) <span class="math inline">\(B\)</span> was
+emitted within a recency window <span class="math inline">\(W\)</span>
+before the report (default: last 4 swarm-steps), and (c) the report’s
+CoT contains a textual or semantic reference to content in <span
+class="math inline">\(B\)</span>. Reference is checked via substring
+match on key tokens plus cosine-similarity of <span
+class="math inline">\(B\)</span>’s message against report-CoT segments
+above threshold <span class="math inline">\(0.7\)</span>.</p>
+<p><strong>Leaf identification (alternative, principled)</strong>:
+counterfactually verify that without <span
+class="math inline">\(B\)</span> in the reporting agent’s buffer, the
+agent would not have produced the same correct answer. Consistent with
+the causal-edge mechanism in §3.5 but adds one forward pass per
+candidate leaf. Reserved for v1.5 / final eval.</p>
+<p>A <strong>productive cascade</strong> is a weakly-connected component
+in the causal DAG that contains at least one leaf broadcast.
+Non-productive causal cascades are logged for diagnostics but not used
+in the loss.</p>
+<h3 id="attribution-weighting-recursive-dag-propagation">3.7 Attribution
+weighting (recursive DAG-propagation)</h3>
+<p>For each slot-fill event <span class="math inline">\(e\)</span> with
+reward <span class="math inline">\(R_e\)</span>, we distribute reward
+backward through the causal DAG using uniform per-parent shares.</p>
+<p>Define attribution <span class="math inline">\(A(B)\)</span>
+recursively:</p>
+<p><span class="math display">\[A(B) = \sum_{B&#39; \,:\, B \to B&#39;
+\text{ in DAG}} \frac{A(B&#39;)}{|\text{parents}(B&#39;)|}\]</span></p>
+<p>with base case <span class="math inline">\(A(B_{\text{leaf}}) =
+R_e\)</span> for any broadcast that is a leaf for slot-fill <span
+class="math inline">\(e\)</span>.</p>
+<p>For multiple slot-fills in one rollout, sum across events: <span
+class="math inline">\(A^{\text{total}}(B) = \sum_e A_e(B)\)</span>.</p>
+<p><strong>Worked example</strong>.</p>
+<pre><code>B1, B2 → B3
+B4, B5, B6 → B7
+B3, B7 → B8 → answer</code></pre>
+<p>With reward <span class="math inline">\(R\)</span> at B8 (the leaf):
+- <span class="math inline">\(A(B_8) = R\)</span> - <span
+class="math inline">\(A(B_3) = R / |\text{parents}(B_8)| = R/2\)</span>
+- <span class="math inline">\(A(B_7) = R/2\)</span> - <span
+class="math inline">\(A(B_1) = (R/2)/|\text{parents}(B_3)| =
+R/4\)</span> - <span class="math inline">\(A(B_2) = R/4\)</span> - <span
+class="math inline">\(A(B_4) = (R/2)/|\text{parents}(B_7)| =
+R/6\)</span> - <span class="math inline">\(A(B_5) = R/6\)</span> - <span
+class="math inline">\(A(B_6) = R/6\)</span></p>
+<p>This scheme gives: - <strong>Depth discounting</strong>: deep
+upstream broadcasts get less credit than proximal ones. - <strong>Width
+discounting</strong>: a broadcast whose effect was diluted across many
+siblings gets a smaller share. - <strong>Diamond handling</strong>: a
+broadcast contributing through multiple downstream paths gets credit
+through each, summed. - <strong>Compositional across
+slot-fills</strong>: total attribution is the sum across all slot-fill
+events.</p>
+<p>Per-agent attribution: <span class="math inline">\(A_i = \sum_{B
+\text{ emitted by } i} A^{\text{total}}(B)\)</span>.</p>
+<h3 id="critical-exponents-target">3.8 Critical exponents (target)</h3>
+<p>If the trained swarm is critical:</p>
+<p><span class="math display">\[P(s) \sim s^{-\tau}, \quad P(T) \sim
+T^{-\alpha}, \quad \langle s \rangle(T) \sim T^\gamma\]</span></p>
+<p>with self-consistency <span class="math inline">\(\gamma =
+(\alpha-1)/(\tau-1)\)</span>. Mean-field branching predicts <span
+class="math inline">\(\tau = 3/2, \alpha = 2, \gamma = 2\)</span>. We
+don’t expect mean-field exactly; we do expect (a) approximate power laws
+over <span class="math inline">\(\geq 1.5\)</span> decades, (b)
+self-consistent exponents, (c) data collapse under finite-size scaling
+across <span class="math inline">\(N \in \{32, 64, 128,
+256\}\)</span>.</p>
+<p>Statistics computed over <strong>productive cascades</strong>; the
+chatty/non-productive distribution is logged separately as a
+control.</p>
+<hr />
+<h2 id="loss-function">4. Loss Function</h2>
+<h3 id="grpo-formulation-nested-groups">4.1 GRPO formulation (nested
+groups)</h3>
+<p>Tinker’s <code>EnvGroupBuilder</code> natively supports two group
+semantics, which we use simultaneously:</p>
+<ul>
+<li><strong>Outer group (across rollouts)</strong>: <span
+class="math inline">\(G\)</span> rollouts of the <em>same task
+config</em>. Standard GRPO variance reduction — advantages centered
+against the outer-group mean.</li>
+<li><strong>Inner group (within rollout)</strong>: the <span
+class="math inline">\(N\)</span> agents in a single rollout. Each
+agent’s trajectory is a sample of the shared policy in a different
+state. Per-agent attribution (§3.7) gives heterogeneous credit;
+centering across agents within a rollout gives the swarm-level credit
+signal.</li>
+</ul>
+<p>For agent <span class="math inline">\(i\)</span> in rollout <span
+class="math inline">\(g\)</span> with rollout-level reward <span
+class="math inline">\(R_g\)</span> and attribution <span
+class="math inline">\(A_i^g\)</span>:</p>
+<p><span class="math display">\[R_i^g = R_g \cdot w_i^g, \qquad w_i^g =
+\sigma\!\left(\lambda_w \cdot \frac{A_i^g}{\max_j A_j^g +
+\epsilon}\right)\]</span></p>
+<p>The participation weight <span class="math inline">\(w_i^g\)</span>
+rewards agents who appear at high-credit positions in productive
+cascades (proximal, narrow-fan-in). <span
+class="math inline">\(\lambda_w = 2.0\)</span> initial.</p>
+<p><strong>Two-level advantage</strong>. We center first within rollout,
+then across rollouts:</p>
+<p><span class="math display">\[\hat{A}_i^g = \frac{R_i^g -
+\mu_g^{\text{inner}}}{\sigma_g^{\text{inner}} + \epsilon} + \zeta \cdot
+\frac{R_g - \mu^{\text{outer}}}{\sigma^{\text{outer}} +
+\epsilon}\]</span></p>
+<p>where <span class="math inline">\(\mu_g^{\text{inner}} =
+\text{mean}_j(R_j^g)\)</span>, etc., and <span
+class="math inline">\(\zeta \in [0,1]\)</span> blends outer-group signal
+(default <span class="math inline">\(\zeta = 0.5\)</span>). Inner term
+gives credit assignment among agents; outer term reduces variance
+against task difficulty.</p>
+<p>GRPO loss with PPO clip:</p>
+<p><span class="math display">\[\mathcal{L}_{\text{GRPO}}^{\text{swarm}}
+= -\mathbb{E}_{g, i}\!\left[\frac{1}{|\tau_i^g|} \sum_{\text{block} \in
+\tau_i^g} \frac{1}{|\text{block}|}\sum_{t \in \text{block}}
+\min\!\big(\rho_t \hat{A}_i^g,\; \text{clip}(\rho_t, 1{-}\epsilon,
+1{+}\epsilon) \hat{A}_i^g\big)\right] + \beta_{\text{KL}}\,
+\mathcal{D}_{\text{KL}}(\pi_\theta \,\|\, \pi_{\text{ref}})\]</span></p>
+<p>with <span class="math inline">\(\rho_t = \pi_\theta(a^t \mid x^t) /
+\pi_{\theta_{\text{old}}}(a^t \mid x^t)\)</span>.</p>
+<p>The shared LoRA receives gradients from all <span
+class="math inline">\(N \times G\)</span> agent-trajectories pooled.
+Agent interchangeability preserved: identical policy, heterogeneous
+states.</p>
+<h3 id="mutual-information-term-attribution-weighted">4.2 Mutual
+information term (attribution-weighted)</h3>
+<p>Let <span class="math inline">\(z_B \in \mathbb{R}^d\)</span> be the
+residual-stream activation of the policy at the moment broadcast <span
+class="math inline">\(B\)</span> is emitted (final hidden state at the
+BROADCAST tool token). For each causal edge <span
+class="math inline">\(B_p \to B_c\)</span> in a productive cascade,
+compute InfoNCE:</p>
+<p><span class="math display">\[\mathcal{L}_{\text{MI}} =
+-\mathbb{E}_{(B_p \to B_c)}\!\left[\omega_{p,c} \cdot \log
+\frac{\exp(\phi(z_{B_p}, z_{B_c})/T)}{\sum_{B_k \in \mathcal{N}^-}
+\exp(\phi(z_{B_p}, z_{B_k})/T)}\right]\]</span></p>
+<ul>
+<li><span class="math inline">\(\mathcal{N}^-\)</span>: negatives from
+non-causally-linked broadcasts in the same outer group.</li>
+<li><span class="math inline">\(\phi(u,v) = u^\top W v\)</span>: small
+bilinear critic, trained jointly.</li>
+<li><span class="math inline">\(T = 0.1\)</span> initial.</li>
+<li><span class="math inline">\(\omega_{p,c} =
+\frac{A(B_c)/|\text{parents}(B_c)|}{\sum_{B}
+A^{\text{total}}(B)}\)</span>: edge-attribution weight — the share of
+reward flowing along this specific edge, normalized.</li>
+</ul>
+<p>Load-bearing edges (high attribution flow) contribute more to the MI
+objective; peripheral edges contribute less. The restriction to
+productive-cascade edges prevents the failure mode where agents satisfy
+MI by broadcasting correlated noise — such broadcasts wouldn’t be on
+causal paths to slot-fills, so their edges are never in the sum.</p>
+<h3 id="communication-sparsity">4.3 Communication sparsity</h3>
+<p><span class="math inline">\(L_1\)</span> on broadcast gate values
+(continuous, gives smooth gradients):</p>
+<p><span class="math display">\[\mathcal{L}_{\text{sparse}} = \frac{1}{N
+\cdot T_{\max}}\sum_{i=1}^N \sum_{t=1}^{T_{\max}} g_i^t\]</span></p>
+<p>Combined with productive-restricted MI: silence is cheap,
+broadcasting expensive, productive broadcasting the only thing that
+pays.</p>
+<h3 id="total-loss">4.4 Total loss</h3>
+<p><span class="math display">\[\boxed{\mathcal{L}_{\text{total}} =
+\mathcal{L}_{\text{GRPO}}^{\text{swarm}} + \lambda_{\text{MI}}
+\mathcal{L}_{\text{MI}} + \lambda_{\text{sp}}
+\mathcal{L}_{\text{sparse}}}\]</span></p>
+<p><strong>No FSS regularizer.</strong> FSS is reserved as measurement
+(§6) — using it as a regularizer would assume the conclusion
+(criticality) rather than test for it.</p>
+<hr />
+<h2 id="training-procedure-tinker">5. Training Procedure (Tinker)</h2>
+<h3 id="mapping-to-tinker-primitives">5.1 Mapping to Tinker
+primitives</h3>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Tinker primitive</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Single agent’s view</td>
+<td><code>Env</code> (one per agent in swarm)</td>
+</tr>
+<tr>
+<td>One swarm rollout</td>
+<td><code>EnvGroupBuilder</code> returning <span
+class="math inline">\(N\)</span> envs</td>
+</tr>
+<tr>
+<td>Outer group (multiple rollouts of same task)</td>
+<td>Multiple <code>EnvGroupBuilder</code> instances batched</td>
+</tr>
+<tr>
+<td>LoRA training client</td>
+<td><code>service_client.create_lora_training_client(rank=16)</code></td>
+</tr>
+<tr>
+<td>Custom loss</td>
+<td><code>forward_backward_custom</code></td>
+</tr>
+<tr>
+<td>Inference for rollouts</td>
+<td><code>save_weights_and_get_sampling_client()</code> +
+<code>sample()</code></td>
+</tr>
+<tr>
+<td>Counterfactual gate logits</td>
+<td>extra <code>sample()</code> calls with modified message buffer</td>
+</tr>
+</tbody>
+</table>
+<p>The InfoNCE bilinear critic <span class="math inline">\(\phi\)</span>
+is <strong>outside Tinker</strong> — a small CPU/GPU-local module
+(PyTorch, ~1M params) that we train alongside via standard backprop on
+logged residual activations. Gradients to the policy flow through
+Tinker’s <code>forward_backward_custom</code>; gradients to <span
+class="math inline">\(\phi\)</span> are local.</p>
+<h3 id="phases">5.2 Phases</h3>
+<p>Each phase ends when its criterion stabilizes for <span
+class="math inline">\(\geq 100\)</span> steps.</p>
+<p><strong>Phase 0 — Task warmup (single agent).</strong> - <span
+class="math inline">\(N=1\)</span>, full corpus visible (or ablated to
+fit context), no broadcast tool. - Loss: <span
+class="math inline">\(\mathcal{L}_{\text{GRPO}}\)</span> only. - Goal:
+agent uses READ + REPORT effectively. - Criterion: <span
+class="math inline">\(\geq 50\%\)</span> task success on held-out
+questions at <span class="math inline">\(L_C = 1M, K=2\)</span>.</p>
+<p><strong>Phase 1 — Swarm task (no MI, no sparsity).</strong> - <span
+class="math inline">\(N=64\)</span>, sharded, full action space. - Loss:
+<span
+class="math inline">\(\mathcal{L}_{\text{GRPO}}^{\text{swarm}}\)</span>
+only (<span class="math inline">\(\lambda_{\text{MI}} =
+\lambda_{\text{sp}} = 0\)</span>). - Goal: swarm coordinates under task
+pressure (rollout reward + budget penalty). - Criterion: <span
+class="math inline">\(\geq 20\%\)</span> improvement over no-comm
+baseline on efficiency-weighted success. - Diagnostic: log
+productive-cascade statistics as pre-criticality baseline.</p>
+<p><strong>Phase 2 — Criticality terms.</strong> - Same setup as Phase
+1. - Loss: full <span
+class="math inline">\(\mathcal{L}_{\text{total}}\)</span>. - Goal:
+productive avalanche distributions develop power-law shape; swarm
+performance improves or holds. - Criterion: <span
+class="math inline">\(P(s_{\text{productive}})\)</span> log-log slope
+<span class="math inline">\(\in [-3, -1]\)</span> over <span
+class="math inline">\(\geq 1\)</span> decade with non-trivial
+p-value.</p>
+<p><strong>Phase 3 — Multi-scale measurement.</strong> - Mixed batches,
+<span class="math inline">\(N \in \{32, 64, 128, 256\}\)</span>. - Loss:
+full <span class="math inline">\(\mathcal{L}_{\text{total}}\)</span> (no
+FSS regularization). - Goal: critical exponents <em>measured</em> across
+<span class="math inline">\(N\)</span>, self-consistency and data
+collapse verified. - Criterion: scaling collapse residual <span
+class="math inline">\(&lt; 0.15\)</span>.</p>
+<p>If Phase 3 fails to show data collapse, that’s an interesting result
+on its own — locally power-law statistics without the universal scaling
+structure of a true critical point.</p>
+<h3 id="training-loop-pseudocode-tinker-flavored">5.3 Training loop
+pseudocode (Tinker-flavored)</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># === Setup ===</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>training_client <span class="op">=</span> service_client.create_lora_training_client(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    base_model<span class="op">=</span><span class="st">&quot;Qwen/Qwen2.5-7B-Instruct&quot;</span>, rank<span class="op">=</span><span class="dv">16</span>, alpha<span class="op">=</span><span class="dv">32</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>infonce_critic <span class="op">=</span> BilinearCritic(d<span class="op">=</span>hidden_dim).to(device)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>optimizer_critic <span class="op">=</span> AdamW(infonce_critic.parameters(), lr<span class="op">=</span><span class="fl">1e-4</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> step <span class="kw">in</span> <span class="bu">range</span>(num_steps):</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># === Sample G outer-group rollouts of same task config ===</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    cfg <span class="op">=</span> sample_rollout_config()  <span class="co"># N, K, L_C, B, decoys, k</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    sampling_client <span class="op">=</span> training_client.save_weights_and_get_sampling_client()</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    rollouts <span class="op">=</span> []</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> g <span class="kw">in</span> <span class="bu">range</span>(G):</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Each rollout is one EnvGroupBuilder with N agent-Envs</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        rollout <span class="op">=</span> run_swarm(sampling_client, cfg, graph<span class="op">=</span>sample_k_regular(N, k<span class="op">=</span><span class="dv">4</span>))</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        rollouts.append(rollout)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># === Causal DAG + cascade analysis (offline, post-rollout) ===</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> rollouts:</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        r.causal_DAG <span class="op">=</span> build_causal_DAG(r, sampling_client)   <span class="co"># uses CF gate logits</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        r.leaves <span class="op">=</span> identify_leaves_cheap(r)                   <span class="co"># §3.6 v1 method</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        r.productive_cascades <span class="op">=</span> filter_productive(r.causal_DAG, r.leaves)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        r.attribution <span class="op">=</span> propagate_attribution(r.causal_DAG, r.leaves, r.rewards)</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="co"># === Two-level advantages ===</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    R_outer <span class="op">=</span> [task_reward(r) <span class="cf">for</span> r <span class="kw">in</span> rollouts]</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>    mu_o, sd_o <span class="op">=</span> mean(R_outer), std(R_outer)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> g, r <span class="kw">in</span> <span class="bu">enumerate</span>(rollouts):</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>        R_inner <span class="op">=</span> [R_outer[g] <span class="op">*</span> sigmoid(λ_w <span class="op">*</span> r.attribution[i] <span class="op">/</span> max_attr) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N)]</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>        mu_i, sd_i <span class="op">=</span> mean(R_inner), std(R_inner)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>            r.A[i] <span class="op">=</span> (R_inner[i] <span class="op">-</span> mu_i) <span class="op">/</span> (sd_i <span class="op">+</span> ε) <span class="op">+</span> ζ <span class="op">*</span> (R_outer[g] <span class="op">-</span> mu_o) <span class="op">/</span> (sd_o <span class="op">+</span> ε)</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># === Build Tinker training data ===</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    training_data <span class="op">=</span> []</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> rollouts:</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(N):</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> block <span class="kw">in</span> r.trajectories[i].blocks:</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>                training_data.append(Datum(</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>                    tokens<span class="op">=</span>block.tokens,</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>                    advantage<span class="op">=</span>r.A[i],</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>                    log_prob_old<span class="op">=</span>block.log_prob,</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>                    block_length<span class="op">=</span><span class="bu">len</span>(block.tokens),</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>                ))</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>    <span class="co"># === GRPO loss via Tinker&#39;s forward_backward_custom ===</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>    grpo_loss_fn <span class="op">=</span> make_clipped_surrogate_loss(epsilon<span class="op">=</span><span class="fl">0.2</span>, beta_kl<span class="op">=</span><span class="fl">0.01</span>)</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>    fb_future <span class="op">=</span> training_client.forward_backward_custom(training_data, grpo_loss_fn)</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>    <span class="co"># === InfoNCE loss (separate, local) ===</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>    edges <span class="op">=</span> [(p, c, ω) <span class="cf">for</span> r <span class="kw">in</span> rollouts</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>             <span class="cf">for</span> cascade <span class="kw">in</span> r.productive_cascades</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>             <span class="cf">for</span> (p, c, ω) <span class="kw">in</span> cascade.edges_with_attribution_weights]</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>    L_mi <span class="op">=</span> infonce_loss(infonce_critic, edges, negatives<span class="op">=</span>sample_negatives(rollouts))</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    L_sp <span class="op">=</span> sparsity_loss(rollouts)</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>    <span class="co"># The MI gradient flows to the policy through residual activations</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    <span class="co"># (recorded during sampling, treated as policy outputs for the InfoNCE critic).</span></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Implementation note: the InfoNCE term is added as a custom loss head</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>    <span class="co"># via forward_backward_custom that takes (policy_residuals, critic_output) → scalar.</span></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>    fb_future_aux <span class="op">=</span> training_client.forward_backward_custom(</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>        residual_data, <span class="kw">lambda</span> r: λ_MI <span class="op">*</span> L_mi(r) <span class="op">+</span> λ_sp <span class="op">*</span> L_sp(r)</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    fb_future.result()</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>    fb_future_aux.result()</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>    training_client.optim_step(...)</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>    optimizer_critic.step()  <span class="co"># local</span></span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>    <span class="co"># === Logging ===</span></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>    log_avalanche_distributions(rollouts)</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>    log_productive_ratio(rollouts)</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> step <span class="op">%</span> eval_interval <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>        evaluate_held_out(sampling_client)</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>        fit_critical_exponents(recent_productive_cascades)</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> phase <span class="op">&gt;=</span> <span class="dv">3</span>: measure_finite_size_scaling()</span></code></pre></div>
+<h3 id="rollout-one-swarm-episode">5.4 Rollout (one swarm episode)</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> run_swarm(sampling_client, cfg, graph):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    agents <span class="op">=</span> [AgentEnv(shard<span class="op">=</span>C_i, question<span class="op">=</span>cfg.q) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(cfg.N)]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    budget <span class="op">=</span> cfg.B</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    cascade_log <span class="op">=</span> CascadeLogger()</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    final_answer <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(cfg.T_max):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> budget <span class="op">&lt;=</span> <span class="dv">0</span> <span class="kw">or</span> final_answer <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Step all agents concurrently (Tinker async sample)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        actions <span class="op">=</span> <span class="cf">await</span> asyncio.gather(<span class="op">*</span>[</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>            sample_block(sampling_client, agents[i], received<span class="op">=</span>collect_msgs(graph[i], t))</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(cfg.N)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        ])</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i, (block, action, gate, residual) <span class="kw">in</span> <span class="bu">enumerate</span>(actions):</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>            agents[i].cot.append(block)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> action.<span class="bu">type</span> <span class="op">==</span> READ:</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>                budget <span class="op">-=</span> <span class="bu">len</span>(action.span)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>                agents[i].observe(action.span)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">elif</span> action.<span class="bu">type</span> <span class="op">==</span> BROADCAST <span class="kw">and</span> gate <span class="op">&gt;</span> τ:</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>                broadcast(action.msg, sender<span class="op">=</span>i, receivers<span class="op">=</span>graph[i], t<span class="op">=</span>t,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>                          residual<span class="op">=</span>residual, gate<span class="op">=</span>gate,</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>                          received_at_emission<span class="op">=</span>collect_msgs(graph[i], t))</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>                cascade_log.record(i, t, action.msg, residual, gate)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">elif</span> action.<span class="bu">type</span> <span class="op">==</span> REPORT:</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>                final_answer <span class="op">=</span> action.answer</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> Rollout(</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>        trajectories<span class="op">=</span>[a.trajectory <span class="cf">for</span> a <span class="kw">in</span> agents],</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        cascade_log<span class="op">=</span>cascade_log,</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>        final_answer<span class="op">=</span>final_answer,</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>        budget_used<span class="op">=</span>cfg.B <span class="op">-</span> budget,</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div>
+<h3 id="hyperparameters">5.5 Hyperparameters</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Meaning</th>
+<th>Phase 1</th>
+<th>Phase 2</th>
+<th>Phase 3</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="math inline">\(G\)</span></td>
+<td>Outer group size</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td><span class="math inline">\(N\)</span></td>
+<td>Agents per rollout</td>
+<td>64</td>
+<td>64</td>
+<td>varied</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\lambda_{\text{MI}}\)</span></td>
+<td>MI weight</td>
+<td>0</td>
+<td>0.1</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\lambda_{\text{sp}}\)</span></td>
+<td>Sparsity weight</td>
+<td>0</td>
+<td>0.05</td>
+<td>0.05</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\lambda_w\)</span></td>
+<td>Participation weight scale</td>
+<td>2.0</td>
+<td>2.0</td>
+<td>2.0</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\zeta\)</span></td>
+<td>Outer/inner advantage blend</td>
+<td>0.5</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\beta_{\text{KL}}\)</span></td>
+<td>KL to reference</td>
+<td>0.01</td>
+<td>0.01</td>
+<td>0.01</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\epsilon\)</span></td>
+<td>PPO clip</td>
+<td>0.2</td>
+<td>0.2</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td><span class="math inline">\(T\)</span></td>
+<td>InfoNCE temp</td>
+<td>—</td>
+<td>0.1</td>
+<td>0.1</td>
+</tr>
+<tr>
+<td><span class="math inline">\(k\)</span></td>
+<td>Comm graph degree</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\tau\)</span></td>
+<td>Gate threshold</td>
+<td>0.5</td>
+<td>0.5</td>
+<td>0.5</td>
+</tr>
+<tr>
+<td><span class="math inline">\(W\)</span></td>
+<td>Leaf-recency window</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\beta\)</span></td>
+<td>Completion bonus</td>
+<td>1.0</td>
+<td>1.0</td>
+<td>1.0</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\alpha_k\)</span></td>
+<td>Per-slot reward</td>
+<td>0.2</td>
+<td>0.2</td>
+<td>0.2</td>
+</tr>
+<tr>
+<td><span class="math inline">\(\gamma\)</span></td>
+<td>Budget penalty</td>
+<td>0.3</td>
+<td>0.3</td>
+<td>0.3</td>
+</tr>
+<tr>
+<td><span class="math inline">\(T_{\max}\)</span></td>
+<td>Rollout step cap</td>
+<td>32</td>
+<td>32</td>
+<td>32</td>
+</tr>
+<tr>
+<td>LoRA rank</td>
+<td>—</td>
+<td>16</td>
+<td>16</td>
+<td>16</td>
+</tr>
+<tr>
+<td>Learning rate</td>
+<td>—</td>
+<td>4e-5</td>
+<td>4e-5</td>
+<td>4e-5</td>
+</tr>
+</tbody>
+</table>
+<p>LoRA target: attention projections + MLP up/down. Base frozen.</p>
+<hr />
+<h2 id="measurements-and-diagnostics">6. Measurements and
+Diagnostics</h2>
+<h3 id="per-step-logging">6.1 Per-step logging</h3>
+<ul>
+<li>Task success rate (held-out).</li>
+<li>Per-slot fill rate.</li>
+<li><strong>Productive-cascade ratio</strong>: <span
+class="math inline">\(|\text{productive}| / |\text{all causal
+cascades}|\)</span>.</li>
+<li><span class="math inline">\(P(s_{\text{productive}})\)</span>, <span
+class="math inline">\(P(s_{\text{causal}})\)</span>: histograms.</li>
+<li><span class="math inline">\(P(T_{\text{productive}})\)</span>, <span
+class="math inline">\(P(T_{\text{causal}})\)</span>: duration
+distributions.</li>
+<li>Mean broadcasts per rollout, mean gate value.</li>
+<li>Budget utilization <span
+class="math inline">\(B_{\text{used}}/B\)</span>.</li>
+<li><span class="math inline">\(\hat{I}(z_{B_p}; z_{B_c})\)</span> for
+productive-cascade edges.</li>
+<li>Distribution of attribution values <span
+class="math inline">\(A_i\)</span> across agents (Gini, max/median
+ratio).</li>
+</ul>
+<h3 id="periodic-deep-diagnostics">6.2 Periodic deep diagnostics</h3>
+<p>Every <span class="math inline">\(K=500\)</span> steps:</p>
+<ul>
+<li><strong>Power-law fit</strong> on <span
+class="math inline">\(P(s_{\text{productive}})\)</span>: ML fit per
+Clauset–Shalizi–Newman, p-value via bootstrap, comparison vs
+lognormal/exponential.</li>
+<li><strong>Duration exponent fit</strong> on <span
+class="math inline">\(P(T_{\text{productive}})\)</span>.</li>
+<li><strong>Self-consistency</strong>: <span
+class="math inline">\(\langle s\rangle(T)\)</span> slope <span
+class="math inline">\(\gamma_{\text{measured}}\)</span>; verify <span
+class="math inline">\(|\gamma_{\text{measured}} - (\alpha-1)/(\tau-1)|
+&lt; 0.3\)</span>.</li>
+<li><strong>MI-vs-graph-distance</strong>: <span
+class="math inline">\(\hat{I}\)</span> as function of graph distance
+<span class="math inline">\(d_\mathcal{G}(i,j)\)</span>; should decay as
+power law at criticality.</li>
+</ul>
+<h3 id="phase-3-finite-size-scaling-measurement-only">6.3 Phase 3:
+Finite-size scaling (measurement only)</h3>
+<p>Post-Phase-3:</p>
+<ol type="1">
+<li>Inference rollouts at <span class="math inline">\(N \in \{32, 64,
+128, 256\}\)</span> with all other hyperparameters fixed.</li>
+<li>Compute <span class="math inline">\(P(s_{\text{productive}};
+N)\)</span> per <span class="math inline">\(N\)</span>.</li>
+<li>Test data collapse: under scaling ansatz <span
+class="math inline">\(P(s; N) = s^{-\tau} f(s/N^{1/\sigma})\)</span>,
+plot <span class="math inline">\(s^\tau P(s; N)\)</span> vs <span
+class="math inline">\(s/N^{1/\sigma}\)</span>. Critical <span
+class="math inline">\(\Rightarrow\)</span> all <span
+class="math inline">\(N\)</span> collapse onto a single <span
+class="math inline">\(f\)</span>.</li>
+<li>Collapse residual = MSE between rescaled curves. Success: <span
+class="math inline">\(&lt; 0.15\)</span>.</li>
+</ol>
+<h3 id="v1-success-criteria">6.4 v1 Success criteria</h3>
+<p><strong>Success</strong> if all hold: 1. Trained swarm beats no-comm
+baseline by <span class="math inline">\(\geq 25\%\)</span> on
+efficiency-weighted task success. 2. <span
+class="math inline">\(P(s_{\text{productive}})\)</span> fits power law
+with <span class="math inline">\(\tau \in [1.3, 2.5]\)</span> over <span
+class="math inline">\(\geq 1.5\)</span> decades, p-value <span
+class="math inline">\(\geq 0.1\)</span>. 3. Self-consistency <span
+class="math inline">\(|\gamma - (\alpha-1)/(\tau-1)| &lt; 0.3\)</span>.
+4. Data collapse residual <span class="math inline">\(&lt;
+0.15\)</span>.</p>
+<p><strong>Partial success</strong> (still publishable): - (1) holds,
+(2)-(4) fail → criticality terms didn’t induce criticality but did help
+coordination. - (2)-(4) hold, (1) fails → induced criticality without
+computational benefit. Calls hypothesis into question for LLM
+swarms.</p>
+<p><strong>Failure</strong>: neither task improvement nor critical
+statistics. Loss formulation needs revision.</p>
+<hr />
+<h2 id="baselines-and-ablations">7. Baselines and Ablations</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Run</th>
+<th>Description</th>
+<th>Tests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B1</td>
+<td>Single agent, full context (where corpus fits)</td>
+<td>Upper bound</td>
+</tr>
+<tr>
+<td>B2</td>
+<td><span class="math inline">\(N\)</span> independent agents, no comm,
+sharded</td>
+<td>Pure-parallel baseline</td>
+</tr>
+<tr>
+<td>B3</td>
+<td>Swarm, Phase 1 only (<span class="math inline">\(\lambda_{\text{MI}}
+= 0\)</span>)</td>
+<td>Does MI loss matter?</td>
+</tr>
+<tr>
+<td>B4</td>
+<td>Swarm, Phase 2, no sparsity (<span
+class="math inline">\(\lambda_{\text{sp}} = 0\)</span>)</td>
+<td>Does sparsity matter?</td>
+</tr>
+<tr>
+<td>B5</td>
+<td>Swarm, MI over <em>all</em> causal cascades (not
+productive-only)</td>
+<td>Does productive restriction prevent noise-MI?</td>
+</tr>
+<tr>
+<td>B6</td>
+<td>Swarm, fully connected graph</td>
+<td>Does sparse topology matter, or just gating?</td>
+</tr>
+<tr>
+<td>B7</td>
+<td>Swarm, no shared parameters (per-agent LoRA)</td>
+<td>Confirms shared-policy is necessary for FSS</td>
+</tr>
+<tr>
+<td>B8</td>
+<td>Swarm, uniform attribution (binary on/off, no DAG-prop)</td>
+<td>Does recursive attribution improve over flat?</td>
+</tr>
+<tr>
+<td>B9</td>
+<td>Swarm, leaf identification via counterfactual (§3.6 alt)</td>
+<td>Cheap leaf method robust enough?</td>
+</tr>
+</tbody>
+</table>
+<p>B3, B5, B8 are the critical scientific ablations.</p>
+<hr />
+<h2 id="known-risks-and-open-questions">8. Known Risks and Open
+Questions</h2>
+<p><strong>Risk: Productive cascades sparse early on.</strong> If swarm
+hasn’t learned slot-fills in the first hundreds of rollouts, MI term has
+no signal, training stalls. <em>Mitigations</em>: Phase 0 single-agent
+warmup; monitor productive-cascade rate; if <span
+class="math inline">\(&lt;1\%\)</span> for <span
+class="math inline">\(&gt;500\)</span> steps, fall back to brief
+curriculum where productive restriction relaxed.</p>
+<p><strong>Risk: Free-riding under shared rewards.</strong> Recursive
+attribution + participation weights is a cheap proxy. If empirical
+agent-contribution variance stays low (most agents at <span
+class="math inline">\(w_i \approx 0.5\)</span>), escalate to true
+counterfactual difference rewards.</p>
+<p><strong>Risk: Counterfactual gate logits expensive.</strong> v1
+subsamples to 25% during training. May need further reduction or
+distillation of the counterfactual signal into a learned predictor.</p>
+<p><strong>Risk: Cheap leaf identification is noisy.</strong> False
+positives (broadcasts referenced by reporter but not actually
+load-bearing) inflate productive-cascade count and dilute attribution.
+<em>Diagnostic</em>: periodic sanity check using counterfactual leaves
+on a subsample, compare leaf overlap. <em>Escalation</em>: switch to
+counterfactual leaves (§3.6 alternative) if false-positive rate is
+high.</p>
+<p><strong>Risk: Attribution diluted to insignificance for deep
+cascades.</strong> Width discounting plus depth discounting can drive
+<span class="math inline">\(A(B)\)</span> to very small values for
+high-fan-in deep ancestors. <em>Mitigation</em>: monitor the
+distribution of <span class="math inline">\(A(B)\)</span>; if dominated
+by leaves with negligible upstream signal, consider a softer discount
+(e.g. per-parent weight <span
+class="math inline">\(1/\sqrt{|\text{parents}|}\)</span>). Defer to
+v1.5.</p>
+<p><strong>Risk: Block-level credit normalization off.</strong> Long
+CoTs might still dominate gradient norms despite length normalization.
+<em>Diagnostic</em>: per-block-type gradient-norm logging.</p>
+<p><strong>Open: Does shared LoRA + heterogeneous shards produce
+identical agents?</strong> <em>Diagnostic</em>: input-permutation test —
+at evaluation, swap two agents’ shards mid-rollout; verify swarm
+performance unchanged.</p>
+<p><strong>Open: Long-rollout CoT growth.</strong> <span
+class="math inline">\(T_{\max}=32\)</span> swarm-steps × multi-block
+agent turns can produce large contexts. v1: sliding-window truncation.
+v2: explicit summarization.</p>
+<p><strong>Open: Tinker rate limits and async coordination.</strong>
+<span class="math inline">\(N=64\)</span> concurrent
+<code>sample()</code> calls per swarm-step plus counterfactual passes is
+a substantial throughput. May need rate-limit-aware batching or
+staggered stepping.</p>
+<hr />
+<h2 id="what-v1-does-not-cover">9. What v1 Does Not Cover</h2>
+<ul>
+<li><strong>Vuln fuzzing application.</strong> Reserved for v2 once toy
+task validates.</li>
+<li><strong>Schema-blind agents.</strong> v1 uses question-driven
+framing; discovery-only setup is v2.</li>
+<li><strong>Dynamic semantic-locality topology.</strong> v1 = static
+random k-regular; v2 = sentence-transformer-driven dynamic
+neighborhoods.</li>
+<li><strong>Learned communication parameters.</strong> v1 fixes <span
+class="math inline">\(k, \tau\)</span>; v2 learns them.</li>
+<li><strong>Hierarchical baselines</strong> (Kimi-K2.5-style PARL).
+Important for positioning, not necessary for core claim.</li>
+<li><strong>Theoretical analysis.</strong> Empirical-first; theory in v3
+if empirics work.</li>
+</ul>
+<hr />
+<h2 id="implementation-plan">10. Implementation Plan</h2>
+<ol type="1">
+<li>Build corpus + composite-needle generator at 5M-token scale. (Day
+1–3)</li>
+<li>Match function + per-slot reward + paraphrase calibration. (Day
+1–2)</li>
+<li>Phase 0 single-agent baseline via Tinker. (Day 4–5)</li>
+<li>Swarm rollout loop: shared LoRA, k-regular graph, tool-call action
+mapping, async per-agent sampling. (Day 6–10)</li>
+<li>Causal-DAG construction with counterfactual gate logits + cheap leaf
+identification. Validate on synthetic ground-truth rollouts. (Day
+11–13)</li>
+<li>Recursive attribution propagation. Unit tests against worked
+examples (§3.7). (Day 13–14)</li>
+<li>GRPO with nested-group advantages + participation weights, via
+<code>forward_backward_custom</code>. Validate Phase 1. (Day 15–18)</li>
+<li>InfoNCE bilinear critic + sparsity loss. Validate Phase 2. (Day
+19–23)</li>
+<li>Multi-scale evaluation + FSS measurement. Validate Phase 3. (Day
+24–28)</li>
+<li>Ablations B1–B9. (Day 29–34)</li>
+<li>Write up. (Day 35–40)</li>
+</ol>
+<p>Total: ~6 weeks single-person, accounting for RL-debugging friction.
+Compute scales with <span class="math inline">\(G \times N \times L_C
+\times T_{\max}\)</span>; Tinker handles distribution.</p>
+<hr />
+<h2 id="appendix-a-tinker-integration-notes">Appendix A — Tinker
+integration notes</h2>
+<p><strong>Group structure.</strong>
+<code>EnvGroupBuilder.make_envs()</code> returns the <span
+class="math inline">\(N\)</span> agent-envs for one rollout. The
+training loop iterates over <span class="math inline">\(G\)</span> such
+builders per step. Tinker’s built-in advantage centering operates over
+the outer group; we override with our two-level (inner+outer)
+computation in a custom advantage function.</p>
+<p><strong>Custom loss.</strong> <code>forward_backward_custom</code>
+takes a function <code>(model_outputs, datum) → scalar</code>. We pass
+per-block advantages and per-block log-probs in
+<code>Datum.metadata</code>; the loss function reconstructs the clipped
+surrogate plus KL, with block-length normalization applied as in
+§3.4.</p>
+<p><strong>InfoNCE side-channel.</strong> The bilinear critic is a
+separate PyTorch module on the client side. During rollouts, we record
+residual activations at broadcast tokens via <code>sample()</code>’s
+logits-and-hidden-state hook (Tinker exposes hidden states for the final
+layer). The critic trains locally; its gradient is composed with the
+policy gradient via a second <code>forward_backward_custom</code> call
+where the residuals act as policy outputs and the loss is the InfoNCE
+objective.</p>
+<p><strong>Counterfactual gate logits.</strong> For each broadcast, we
+re-run <code>sample()</code> with a modified message buffer (the
+candidate parent broadcast removed). Cheap because we only need the gate
+logit (one token’s logit) — but we still pay one forward pass per
+(broadcast, candidate-parent) pair. Subsample to 25% in training as
+noted in §3.5.</p>
+<p><strong>Checkpointing.</strong> <code>save_state()</code> /
+<code>load_state()</code> for full training-state snapshots;
+<code>save_weights_for_sampler()</code> for inference-only weights at
+evaluation. Save every 100 steps; keep 5 most recent.</p>
+<p><strong>Models to try, in order</strong>: Qwen-2.5 3B (fast
+iteration), Qwen-2.5 7B (v1 target), Llama-3.2 8B (cross-check). LoRA
+rank 16 across the board per Tinker’s “LoRA Without Regret” guidance —
+they argue rank 16–32 matches full FT for RL workloads.</p>
+    </div>
+
+    <a class="back-link github-link" href="projects.html" style="width:max-content;margin:0 auto;"><i class="fas fa-arrow-left"></i> Back to Projects</a>
+
+</body>
+</html>

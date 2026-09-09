@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="440" height="440" viewBox="0 0 440 440">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="70%">
+      <stop offset="0%" stop-color="#1a1a20"/>
+      <stop offset="100%" stop-color="#0a0a0c"/>
+    </radialGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c9a76a"/>
+    </marker>
+  </defs>
+
+  <rect width="440" height="440" fill="url(#bg)"/>
+
+  <!-- faint lattice background -->
+  <g stroke="#ffffff" stroke-opacity="0.03" fill="none">
+    <line x1="40" y1="200" x2="400" y2="200"/>
+    <line x1="40" y1="120" x2="400" y2="120"/>
+    <line x1="40" y1="280" x2="400" y2="280"/>
+    <line x1="40" y1="40" x2="400" y2="360"/>
+  </g>
+
+  <!-- scattered dormant agents -->
+  <g fill="#6a6d76">
+    <circle cx="60" cy="360" r="7"/>
+    <circle cx="120" cy="80" r="8"/>
+    <circle cx="355" cy="60" r="7"/>
+    <circle cx="395" cy="330" r="8"/>
+    <circle cx="180" cy="380" r="6"/>
+    <circle cx="330" cy="300" r="7"/>
+    <circle cx="70" cy="210" r="6"/>
+    <circle cx="380" cy="170" r="7"/>
+  </g>
+
+  <!-- active cascade: tree of radiating nodes -->
+  <g>
+    <!-- edges -->
+    <line x1="220" y1="200" x2="150" y2="120" stroke="#c9a76a" stroke-opacity="0.55" stroke-width="2"/>
+    <line x1="220" y1="200" x2="300" y2="120" stroke="#c9a76a" stroke-opacity="0.55" stroke-width="2"/>
+    <line x1="220" y1="200" x2="150" y2="280" stroke="#c9a76a" stroke-opacity="0.55" stroke-width="2"/>
+    <line x1="220" y1="200" x2="300" y2="280" stroke="#c9a76a" stroke-opacity="0.5" stroke-width="2"/>
+    <line x1="300" y1="120" x2="360" y2="70" stroke="#c9a76a" stroke-opacity="0.45" stroke-width="1.8"/>
+    <line x1="150" y1="120" x2="90" y2="70" stroke="#c9a76a" stroke-opacity="0.4" stroke-width="1.6"/>
+    <line x1="150" y1="280" x2="90" y2="330" stroke="#c9a76a" stroke-opacity="0.4" stroke-width="1.6"/>
+    <line x1="300" y1="280" x2="360" y2="330" stroke="#c9a76a" stroke-opacity="0.45" stroke-width="1.8"/>
+    <line x1="300" y1="280" x2="390" y2="280" stroke="#c9a76a" stroke-opacity="0.35" stroke-width="1.5"/>
+    <line x1="150" y1="120" x2="230" y2="60" stroke="#c9a76a" stroke-opacity="0.4" stroke-width="1.6"/>
+    <!-- inbound "snow" tip from top -->
+    <line x1="220" y1="200" x2="245" y2="268" stroke="#c9a76a" stroke-opacity="0.6" stroke-width="2" marker-end="url(#arrow)"/>
+    <circle cx="245" cy="272" r="6" fill="#c9a76a"/>
+  </g>
+
+  <!-- cascade nodes -->
+  <g fill="#c9a76a">
+    <circle cx="220" cy="200" r="16"/>
+    <circle cx="150" cy="120" r="11"/>
+    <circle cx="300" cy="120" r="11"/>
+    <circle cx="150" cy="280" r="11"/>
+    <circle cx="300" cy="280" r="10"/>
+  </g>
+  <g fill="#a9894d">
+    <circle cx="360" cy="70" r="8"/>
+    <circle cx="90" cy="70" r="8"/>
+    <circle cx="90" cy="330" r="8"/>
+    <circle cx="360" cy="330" r="8"/>
+    <circle cx="390" cy="280" r="7"/>
+    <circle cx="230" cy="60" r="7"/>
+  </g>
+  <g fill="#8a6e3b">
+    <circle cx="245" cy="272" r="6"/>
+  </g>
+</svg>
