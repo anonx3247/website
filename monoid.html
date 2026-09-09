@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ε-Machines: The Basis of Mechanistic Interpretability — Anas Lecaillon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="index.css">
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" id="MathJax-script" async></script>
+    <style>
+        .doc { width: 100%; max-width: 900px; margin: 0 auto; text-align: left; }
+        .doc > h1 { font-size: 2em; letter-spacing: 0.02em; margin-bottom: 4px; }
+        .doc h1, .doc h2, .doc h3 { text-align: left; }
+        .doc h2 { margin-top: 48px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .doc h3 { margin-top: 28px; }
+        .doc p { color: var(--text-mute); line-height: 1.7; }
+        .doc strong { color: #fff; }
+        .doc hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+        .doc blockquote { border-left: 3px solid var(--accent); margin: 16px 0; padding: 4px 16px; color: var(--text-mute); background: rgba(255,255,255,0.02); }
+        .doc table { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 0.95em; }
+        .doc th, .doc td { border: 1px solid var(--border); padding: 10px 14px; text-align: left; }
+        .doc th { background: rgba(255,255,255,0.06); color: #fff; font-family: 'Inter', sans-serif; letter-spacing: 0.03em; font-size: 0.9em; }
+        .doc td { color: var(--text-mute); vertical-align: top; }
+        .doc pre { background: #111216; border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; overflow-x: auto; color: #d7d7dc; font-family: 'JetBrains Mono', monospace; font-size: 0.85em; line-height: 1.55; }
+        .doc code { font-family: 'JetBrains Mono', monospace; font-size: 0.88em; color: #e3c386; }
+        .doc :not(pre) > code { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
+        .doc h1, .doc h2, .doc h3, .doc h4 { font-family: 'CustomFont', Georgia, serif; font-weight: 400; color: #fff; }
+        .doc a { color: var(--accent); }
+        .doc a:hover { color: #fff; }
+        .doc .math { color: #e8e8ec; }
+        .doc .math.inline { }
+        .doc .math.display { text-align: center; margin: 20px 0; }
+        .doc ul, .doc ol { font-family: 'Inter', sans-serif; font-size: 0.95em; color: var(--text-mute); }
+        .doc li { margin-bottom: 4px; }
+        .back-link { display: block; margin-top: 60px; }
+    </style>
+</head>
+<body>
+    <h1>ANAS LECAILLON</h1>
+    <nav>
+        <a href="index.html"><i class="fas fa-home icon"></i>Home</a>
+        <a href="projects.html"><i class="fas fa-project-diagram icon"></i>Projects</a>
+        <a href="experience.html"><i class="fas fa-briefcase icon"></i>Experience</a>
+        <a href="education.html"><i class="fas fa-graduation-cap icon"></i>Education</a>
+        <a href="skills.html"><i class="fas fa-tools icon"></i>Skills</a>
+        <a href="https://msrchd.lecaillon.com"><i class="fas fa-flask icon"></i>Experiments</a>
+    </nav>
+
+    <div class="doc">
+<h1 id="epsilon-machines-the-basis-of-mechanistic-interpretability"><span class="math inline">\(\epsilon\)</span>-Machines: The Basis of Mechanistic Interpretability</h1>
+<p>I would like to express and formalize, in part, a theory (or intersection of theories) I’ve developed regarding a possible path forward in mechanistic interpretability.</p>
+<p>Mechanistic Interpretability aims to explain the <em>mechanics</em> of AI models—not simply <em>that</em> a model produces a certain output, but <em>why</em> it produces that output through understanding the underlying computational process. It’s an intuitive goal: the entire field of mathematics and formal proof theory emerged from the need to understand the reasoning used by others to reach conclusions. Any computation can be viewed as algorithmic, and neural networks should likewise follow algorithmic, causally-modeled principles.</p>
+<p>Causality is thus the core feature of mechanistic interpretability: given inputs, why did the model output what it did? Many methods have been developed to investigate this question—from sparse autoencoders to Anthropic’s Natural Language Autoencoders^1. These approaches work with activations in model layers and attempt to reconstruct the computations that gave rise to them. They’ve successfully identified the geometric structures underlying newline prediction in language models^2, uncovered the circuits responsible for arithmetic in LLMs^3, and isolated basic computational operations in simple logical systems^4.</p>
+<p>For this work, we examine computation through two lenses: algebraic and statistical.</p>
+<p>Gauderis et al.^5 propose that a sound mechanistic interpretability framework minimizes complexity while maintaining fidelity to the underlying computation. This mirrors how physics works: projectile motion abstracts away object volume and shape in favor of vector calculus derived from F=ma. Similarly, thermodynamics uses group statistics to circumvent the intractability of modeling individual particles—we focus on empirical laws (adiabatic equations for gases, the two laws of thermodynamics) rather than attempting to track trillions of atoms. Mechanistic interpretability follows this principle: we aim to reason about the model’s high-level “thinking process” with sufficient predictive power to understand why it will succeed or fail on various tasks before deployment. This predictability is particularly valuable for alignment research, allowing us to characterize model capabilities in broad terms without knowing every possible user input.</p>
+<h2 id="an-algebraic-view-of-neural-networks">An Algebraic View of Neural Networks</h2>
+<p>One way to conceptualize neural networks is as quasi-algebraic systems. The fundamental operation of modern neural networks—matrix multiplication—is inherently algebraic. Though activation functions add complexity, neural networks remain fundamentally algebraic, forming what we can understand as a monoid under function composition.</p>
+<p>A transformer block exemplifies this structure:</p>
+<p><span class="math display">\[\text{output} = \text{attention} \circ \text{linear} \circ \text{normalize} \circ \text{input}\]</span></p>
+<p>This is naturally interpretable as monoid composition.</p>
+<p>Many are familiar with groups—consider addition over real numbers, <span class="math inline">\((\mathbb{R}, +)\)</span>, where the operation maps two group elements to an output that remains in the group. Groups have one property monoids lack: every element has an inverse. For any <span class="math inline">\(a \in \mathbb{R}\)</span>, there exists <span class="math inline">\(-a\)</span> such that <span class="math inline">\(a + (-a) = 0\)</span>. Monoids lack this requirement, which makes sense for neural networks: function composition is not generally invertible. We cannot reverse many neural operations—softmax operations, for instance, sum row elements, destroying information that cannot be recovered from the output alone.</p>
+<p>We don’t need to model the actual monoid representing the neural network directly—it would be as complex and noisy as the network itself. Instead, we seek an underlying, simpler monoid (in a sense we’ll make precise) that still produces approximately the same outputs with manageable error.</p>
+<p>Category theory provides the most general framework for understanding natural transformations. A related field, representation theory, studies how algebraic structures can be canonically embedded (up to isomorphism) into vector spaces. This offers a principled way to understand how abstract algebraic operations appear in neural network weight matrices—the fundamental substrates of neural computation.</p>
+<p>A <em>representation</em> of a monoid <span class="math inline">\(M\)</span> is a homomorphism:</p>
+<p><span class="math display">\[\rho: M \to \text{GL}_d(\mathbb{R})\]</span></p>
+<p>In practical terms: each element <span class="math inline">\(m \in M\)</span> is assigned a matrix <span class="math inline">\(\rho(m) \in \mathbb{R}^{d \times d}\)</span> such that:</p>
+<p><span class="math display">\[\rho(m_1 \cdot m_2) = \rho(m_1) \cdot \rho(m_2)\]</span></p>
+<p>Irreducible representations offer particular insight. When a monoid representation is decomposed into irreducibles, it takes a block-diagonal form:</p>
+<p><span class="math display">\[\rho(m) = \begin{pmatrix} \rho_1(m) &amp; 0 &amp; 0 \\ 0 &amp; \rho_2(m) &amp; 0 \\ 0 &amp; 0 &amp; \rho_3(m) \end{pmatrix}\]</span></p>
+<p>This decomposition is dictated by algebraic structure, not by choice. It reveals causally independent pathways in network activations—channels that do not interact with one another. This addresses a limitation in applying singular learning theory to neural networks: when we measure an activation, we typically cannot localize it to a single neuron or layer, as patterns often distribute across many layers, each processing multiple intertwined patterns. Decomposition into irreducible representations offers a mechanism for achieving genuine locality in this sense.</p>
+<p>Since we care about capturing an abstract-level monoid distinct from the noisy actual network, we work with approximate representations, permitting an error term. The magnitude of this error quantifies how abstract our monoid is relative to the network.</p>
+<h3 id="relation-to-platonic-representation-theory">Relation to Platonic Representation Theory</h3>
+<p>A recurring question in interpretability circles concerns whether intelligent systems exhibit convergent evolution toward canonical concepts and abstractions—what is sometimes called “Platonic” structure, in reference to Plato’s <em>World of Ideas</em>, where concepts exist independently of their physical manifestations.</p>
+<p>If such convergence exists, it would have profound implications. It would enable unified understanding of both biological and artificial intelligence. It would also address a significant alignment challenge: if I specify a model’s values using, say, Asimov’s Three Laws of Robotics in constitutional AI, how can I verify that the model’s internal representation of these terms matches mine? This difficulty exists in human communication too, but we typically succeed because we are “close enough.” If the convergence hypothesis holds, we might hope that models similarly converge to sufficiently aligned internal representations.</p>
+<p>This view entails that mechanistic models of LLMs work across architectures—that the substrate (biological, RNN, or transformer) matters less than the underlying computation. We see evidence in convergent concepts across LLMs from different laboratories and in architecture-agnostic theories of learning like the information bottleneck^6.</p>
+<p>Monoid-based representations are powerful precisely because they abstract computations independent of substrate or architecture. Moreover, by identifying canonical operations (rather than arbitrary ones) through <span class="math inline">\(\epsilon\)</span>-machines, we can establish that multiple architectures execute the same high-level computation despite differing low-level circuit implementations.</p>
+<h2 id="statistical-mechanics-and-epsilon-machines">Statistical Mechanics and <span class="math inline">\(\epsilon\)</span>-Machines</h2>
+<p>Crutchfield &amp; Shalizi^7 established computational mechanics as a field intermediating between statistical mechanics and computation. Particularly for systems near criticality, computational mechanics identifies processes on the Pareto frontier—exhibiting structure (hence non-random) while remaining complex at the base level (and thus not fully reducible to components). This makes computational mechanics especially suited to mechanistic interpretability.</p>
+<p>Formally, they study stationary stochastic processes with infinite pasts. Let <span class="math inline">\((X_t)_{t \in \mathbb{Z}}\)</span> be such a process with alphabet <span class="math inline">\(\mathcal{A}\)</span>:</p>
+<ul>
+<li><strong>Past:</strong> <span class="math inline">\(X^{\leftarrow} = \ldots X_{-2} X_{-1} X_0\)</span> (observations up to and including time 0)</li>
+<li><strong>Future:</strong> <span class="math inline">\(X^{\rightarrow} = X_1 X_2 X_3 \ldots\)</span> (observations from time 1 onward)</li>
+<li><strong>Finite sequences:</strong> <span class="math inline">\(x^n = x_0 x_1 \ldots x_{n-1}\)</span> denotes a sequence of length <span class="math inline">\(n\)</span></li>
+</ul>
+<p><strong>Definition (Causal Equivalence):</strong> Two semi-infinite pasts <span class="math inline">\(x^{\leftarrow}\)</span> and <span class="math inline">\(x&#39;^{\leftarrow}\)</span> are causally equivalent if they produce identical future distributions:</p>
+<p><span class="math display">\[P(X^{\rightarrow} | X^{\leftarrow} = x^{\leftarrow}) = P(X^{\rightarrow} | X^{\leftarrow} = x&#39;^{\leftarrow})\]</span></p>
+<p>The future “looks the same” regardless of which past you had. We partition all pasts into equivalence classes under this relation, calling these classes <strong>causal states</strong> <span class="math inline">\(s \in \mathcal{S}\)</span>. Transitions between states follow:</p>
+<p><span class="math display">\[T(s_{t+1} | s_t, a) = P(S_{t+1} = s_{t+1} | S_t = s_t, X_t = a)\]</span></p>
+<p>This formalism parallels reinforcement learning and Markov decision processes, making it particularly useful for understanding autoregressive models, which are themselves naturally cast as MDPs.</p>
+<p>The <strong><span class="math inline">\(\epsilon\)</span>-machine</strong> is formally defined as:</p>
+<p><span class="math display">\[\varepsilon = (\mathcal{S}, \mathcal{A}, T, P, s_0)\]</span></p>
+<p>where: - <span class="math inline">\(\mathcal{S}\)</span>: the causal state space - <span class="math inline">\(\mathcal{A}\)</span>: the output alphabet - <span class="math inline">\(T(s&#39; | s, a)\)</span>: transition probabilities between states - <span class="math inline">\(P(a | s)\)</span>: emission probabilities (output conditioned on current state) - <span class="math inline">\(s_0\)</span>: the initial state distribution</p>
+<p>This is a hidden Markov model with a defining property: it is the unique minimal HMM generating the process.</p>
+<h3 id="theorem-crutchfield-shalizi-20037">Theorem (Crutchfield &amp; Shalizi, 2003)^7</h3>
+<p>Among all HMMs that generate a process <span class="math inline">\((X_t)\)</span>, the <span class="math inline">\(\epsilon\)</span>-machine possesses the smallest state space <span class="math inline">\(|\mathcal{S}|\)</span>.</p>
+<p>Therefore, if two processes have isomorphic <span class="math inline">\(\epsilon\)</span>-machines, they share the <em>same fundamental computational structure</em>, even if they appear superficially different (different alphabets, rates, or implementations). The <span class="math inline">\(\epsilon\)</span>-machine also minimizes entropy and free energy—maximizing economy of description—precisely solving the faithfulness-complexity tradeoff identified by Gauderis et al.^5</p>
+<p>We apply this to neural activations, treating layer outputs as trajectories:</p>
+<p><span class="math display">\[\mathbf{h}_1, \mathbf{h}_2, \ldots, \mathbf{h}_T\]</span></p>
+<p>The <span class="math inline">\(\epsilon\)</span>-machine of this sequence represents the minimal computational structure the layer implements.</p>
+<h2 id="bringing-the-two-together">Bringing the Two Together</h2>
+<p>We have discussed monoid representation and computational mechanics separately. Their integration follows naturally: the transition set of an <span class="math inline">\(\epsilon\)</span>-machine forms a monoid under composition:</p>
+<p><span class="math display">\[M = \langle T(\cdot | s, a) : s \in \mathcal{S}, a \in \mathcal{A} \rangle\]</span></p>
+<p>Earlier we motivated the search for algebraic structure, but choosing which structure was unclear. Now we see that the <span class="math inline">\(\epsilon\)</span>-machine is the ideal candidate: it minimizes the tradeoff between faithfulness and complexity, grounding our choice in information theory and dynamics rather than heuristic preference.</p>
+<h2 id="further-work-and-questions-left">Further Work and Questions Left</h2>
+<p>Many aspects of this theory remain to be developed. How do we reconstruct the underlying monoid from a neural network? Does a practical algorithm exist? How do we choose appropriate levels of abstraction and set the error term tolerances? Will we retain canonicity if error terms are necessary? (This question is critical: allowing error relaxes uniqueness, leaving multiple candidates. How should we choose among them?)</p>
+<p>Assuming we can extract a network’s <span class="math inline">\(\epsilon\)</span>-machine, what next? One avenue involves using its representation to apply canonical transformations to weight matrices, producing maximally interpretable forms with localized activations—facilitating analysis across various inputs. Another involves constructing causal DAGs from the monoid structure and using these to predict typical outputs for new inputs. We might classify input types by their causal behavior within the monoid, creating equivalence classes of semantically similar inputs. Finally, detecting misalignment, jailbreaks, and dangerous requests might become tractable through monitoring decorrelation and inconsistency between internal representation and model outputs.</p>
+<hr />
+<h2 id="references">References</h2>
+<p>^1. Templeton, A., et al. (2024). “Scaling Monosemanticity: Interpreting Neural Networks with Dictionary Learning.” ArXiv.</p>
+<p>^2. Nanda, N., McGrath, T., et al. (2025). “When Models Manipulate Manifolds: The Geometry of a Counting Task.” Transformer Circuits Thread. https://transformer-circuits.pub/2025/linebreaks/index.html</p>
+<p>^3. Nanda, N., Chan, L., Lieberum, T., Smith, J., &amp; Steinhardt, J. (2023). “Progress Measures for Grokking via Mechanistic Interpretability.” ArXiv:2301.05217.</p>
+<p>^4. Crutchfield, J. P., &amp; Hanson, J. E. (1997). “Computational mechanics of cellular automata: An example.” <em>Physica D</em>, 103(2–4), 169–189. [Crutchfield’s work on extracting <span class="math inline">\(\epsilon\)</span>-machines from simple automata provides foundational methodology for toy symbolic systems.]</p>
+<p>^5. Gauderis, W., Dooms, T., Homer, S. T., Ayonrinde, K., &amp; Wiggins, G. A. (2025). “From Mechanistic to Compositional Interpretability.” ArXiv:2605.08934.</p>
+<p>^6. Tishby, N., &amp; Schwartz-Ziv, R. (2015). “Opening the Black Box of Deep Neural Networks via Information.” <em>Journal of Statistical Physics</em>, 162(7), 1391–1410. ArXiv:1503.06365.</p>
+<p>^7. Crutchfield, J. P., &amp; Shalizi, C. R. (2003). “Regularities Unseen, Randomness Observed: Levels of Description in Complex Systems.” <em>Journal of Chemical Physics</em>, 104(25), 1–77.</p>
+    </div>
+
+    <a class="back-link github-link" href="projects.html" style="width:max-content;margin:0 auto;"><i class="fas fa-arrow-left"></i> Back to Projects</a>
+
+</body>
+</html>
